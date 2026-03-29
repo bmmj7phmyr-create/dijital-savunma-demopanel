@@ -159,7 +159,5 @@ CORS_ALLOWED_ORIGINS = [
 ]
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-from django.contrib.auth import get_user_model
 
-User = get_user_model()
 
