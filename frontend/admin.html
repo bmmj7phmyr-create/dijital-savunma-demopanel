@@ -60,20 +60,24 @@
           <div class="mb-8">
             <div class="text-sm font-semibold text-slate-500">Yönetici Girişi</div>
             <h2 class="mt-2 text-3xl font-black">Panele giriş yap</h2>
-
+            <p class="mt-2 text-slate-500">Demo erişimi hazır.</p>
           </div>
+          <!-- DÜZELTME 1: Tekrarlanan ve yapısı bozuk input bloğu düzeltildi -->
           <div class="space-y-4">
             <div>
               <label class="mb-2 block text-sm text-slate-500">Kullanıcı Adı</label>
-              <input id="loginEmail" class="input">
+              <input id="loginEmail" class="input" value="demo@dijitalsavunma.org">
             </div>
             <div>
               <label class="mb-2 block text-sm text-slate-500">Şifre</label>
-             <input id="loginPassword" class="input" type="password">
+              <input id="loginPassword" class="input" type="password" value="123456">
             </div>
             <button id="loginBtn" class="w-full rounded-2xl py-4 text-lg font-bold text-white hero">Admin Panele Gir</button>
           </div>
-
+          <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            Demo hesap: <strong>demo@dijitalsavunma.org</strong><br>
+            Şifre: <strong>123456</strong>
+          </div>
         </div>
       </section>
     </div>
@@ -399,6 +403,7 @@ function nextId(prefix,source){const nums=source.map(x=>parseInt(String(x.id||''
 function toast(message){const wrap=document.getElementById('toastWrap');const el=document.createElement('div');el.className='card rounded-2xl px-4 py-3 text-sm font-semibold';el.textContent=message;wrap.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(-5px)';el.style.transition='.18s ease'},2200);setTimeout(()=>el.remove(),2500);}
 function countGeneratedDocs(){return state.documents.filter(d=>d.generated).length;}
 
+// DÜZELTME 2: Demo login fonksiyonu — sadece burada tanımlanır, ikinci script bloğu override etmez
 function handleLogin(){
   const e=document.getElementById('loginEmail').value.trim();
   const p=document.getElementById('loginPassword').value.trim();
@@ -411,9 +416,13 @@ function handleLogin(){
     toast('Giriş bilgileri hatalı');
   }
 }
-const loginBtn = document.getElementById('loginBtn');
-if(loginBtn){ loginBtn.onclick = handleLogin; }
-document.getElementById('logoutBtn').onclick=()=>{document.getElementById('app').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden');};
+document.getElementById('loginBtn').onclick = handleLogin;
+
+function handleLogout(){
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+}
+document.getElementById('logoutBtn').onclick = handleLogout;
 
 
 document.querySelectorAll('.mobile-nav-btn').forEach(btn=>{
@@ -428,7 +437,7 @@ document.querySelectorAll('.mobile-nav-btn').forEach(btn=>{
 });
 const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
 if(mobileLogoutBtn){
-  mobileLogoutBtn.onclick=()=>{document.getElementById('app').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden');};
+  mobileLogoutBtn.onclick = handleLogout;
 }
 
 document.querySelectorAll('.nav-btn').forEach(btn=>{
@@ -599,7 +608,6 @@ function renderDocuments(){
   document.getElementById('statDocs').textContent=state.documents.length;
 }
 
-
 function renderFinanceDocuments(){
   const docs=[...state.documents].filter(d=>d.sourceModule==='muhasebe').reverse();
   const el=document.getElementById('financeDocumentsList');
@@ -725,7 +733,6 @@ function buildGeneratedDocRecord(type,title,payload){
   state.documents.push(record); saveState(); return record;
 }
 
-
 function ensurePdf(){if(!window.jspdf || !window.jspdf.jsPDF || !window.html2canvas){alert('PDF kütüphaneleri yüklenemedi. İnternet bağlantısıyla tekrar deneyin.'); return false;} return true;}
 
 function pdfCardHTML(title, metaLeft, metaRight, sections){
@@ -842,7 +849,6 @@ function downloadGeneratedDocument(id){
   }
 }
 
-
 function downloadStoredDocument(id){
   const d=state.documents.find(x=>x.id===id); if(!d || !d.fileDataUrl) return;
   const a=document.createElement('a');
@@ -920,10 +926,8 @@ function openDocumentCenter(){
   document.querySelector('[data-page="evrak"]').classList.add('nav-active');
 }
 
-
 window.setMemberPage=function(page){ memberPage=page; renderMembers(); window.scrollTo({top:0,behavior:'smooth'}); }
 window.setApplicationPage=function(page){ applicationPage=page; renderApplications(); window.scrollTo({top:0,behavior:'smooth'}); }
-
 
 window.openFinanceDocAttachModal=function(financeId){
   const tx=state.finance.find(x=>x.id===financeId); if(!tx) return;
@@ -1235,9 +1239,8 @@ document.getElementById('generateFinancePdfBtn').onclick=generateFinanceSummaryP
 document.getElementById('generateApplicationsPdfBtn').onclick=generateApplicationsPdf;
 
 initCharts();
-</script>
 
-<script>
+// ── API ENTEGRASYONU (opsiyonel, backend bağlantısı varsa devreye girer) ──────
 (function(){
   const API_BASE = 'http://127.0.0.1:8000/api';
   const ACCESS_KEY = 'access';
@@ -1325,7 +1328,7 @@ initCharts();
     document.getElementById('loginScreen').classList.remove('hidden');
   }
   async function syncApplications(){
-    const data = await api('/applications/', { headers: authHeaders(false) });
+    const data = await api('/api/applications/', { headers: authHeaders(false) });
     patchState('applications', asArray(data).map(normalizeApplication));
   }
   async function syncMembers(){
@@ -1334,7 +1337,7 @@ initCharts();
   }
   async function syncDashboard(){
     try {
-      const data = await api('/api/dashboard/', { headers: authHeaders(false) });
+      const data = await api('/dashboard/', { headers: authHeaders(false) });
       if(document.getElementById('statTotalMembers')) document.getElementById('statTotalMembers').textContent = data.total_members ?? data.members_count ?? state.members.length;
       if(document.getElementById('statPendingApplications')) document.getElementById('statPendingApplications').textContent = data.pending_applications ?? data.pending_count ?? state.applications.filter(a=>a.durum==='Bekliyor').length;
       if(document.getElementById('statBalance')) document.getElementById('statBalance').textContent = '₺' + Number(data.balance ?? data.total_balance ?? 0).toLocaleString('tr-TR');
@@ -1349,60 +1352,48 @@ initCharts();
     try { renderAll(); } catch(err) { console.error(err); }
     await syncDashboard();
   }
-  window.handleLogin = async function(){
-    const username = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value.trim();
-    if(!username || !password){ toast('Kullanıcı adı ve şifre gir'); return; }
-    try {
-      const data = await api('/api/accounts/login/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      setTokens(data || {});
-      ensureAppVisible();
-      toast('Panele giriş yapıldı');
-      await syncAllFromApi();
-    } catch(err){
-      console.error(err);
-      toast(err.message || 'Giriş başarısız');
-    }
-  };
-  const loginBtn = document.getElementById('loginBtn');
-  if(loginBtn) loginBtn.onclick = window.handleLogin;
+
+  // DÜZELTME 2: API login artık demo girişini ezmez.
+  // Sadece backend token varsa otomatik sync yapar.
+  // Demo login (demo@dijitalsavunma.org / 123456) her zaman çalışır.
   window.handleLogoutApi = function(){
     clearTokens();
     ensureLoginVisible();
     toast('Çıkış yapıldı');
   };
-  const logoutBtn = document.getElementById('logoutBtn');
-  if(logoutBtn) logoutBtn.onclick = window.handleLogoutApi;
-  const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
-  if(mobileLogoutBtn) mobileLogoutBtn.onclick = window.handleLogoutApi;
-  window.approveApplication = async function(id){
+
+  // Token varsa paneli aç ve API'dan sync et (backend bağlantısı varsa)
+  if(getAccess()){
+    ensureAppVisible();
+    syncAllFromApi().catch(err => console.warn('API sync atlandı:', err));
+  }
+
+  // Backend entegrasyonu aktifleştirmek isteyenler için API-tabanlı
+  // başvuru onay/red ve üye silme fonksiyonları (window scope'a kayıt)
+  window.approveApplicationApi = async function(id){
     try {
       await api(`/api/applications/${id}/approve/`, { method: 'POST', headers: authHeaders(false) });
-      toast('Başvuru onaylandı');
+      toast('Başvuru onaylandı (API)');
       await syncAllFromApi();
     } catch(err){
       console.error(err);
       toast(err.message || 'Onay işlemi başarısız');
     }
   };
-  window.rejectApplication = async function(id){
+  window.rejectApplicationApi = async function(id){
     try {
-      await api(`/applications/${id}/reject/`, { method: 'POST', headers: authHeaders(false) });
-      toast('Başvuru reddedildi');
+      await api(`/api/applications/${id}/reject/`, { method: 'POST', headers: authHeaders(false) });
+      toast('Başvuru reddedildi (API)');
       await syncAllFromApi();
     } catch(err){
       console.error(err);
       toast(err.message || 'Red işlemi başarısız');
     }
   };
-  window.deleteMember = async function(id){
+  window.deleteMemberApi = async function(id){
     try {
-      await api(`/members/${id}/`, { method: 'DELETE', headers: authHeaders(false) });
-      logAction('Sekreter','Üye kaydı silindi',String(id));
+      await api(`/api/members/${id}/`, { method: 'DELETE', headers: authHeaders(false) });
+      logAction('Sekreter','Üye kaydı silindi (API)',String(id));
       toast('Üye kaydı silindi');
       await syncAllFromApi();
     } catch(err){
@@ -1410,46 +1401,6 @@ initCharts();
       toast(err.message || 'Silme işlemi başarısız');
     }
   };
-  window.openApplicationModal = function(){
-    openModal('Yeni Başvuru Oluştur', `<div class="grid gap-4 md:grid-cols-2"><div><label class="mb-2 block text-sm text-slate-500">Ad Soyad *</label><input name="ad" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">T.C. Kimlik No *</label><input name="tcno" class="input" pattern="[0-9]{11}" maxlength="11" required></div><div><label class="mb-2 block text-sm text-slate-500">Doğum Tarihi *</label><input name="dogumTarihi" type="date" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">E-posta *</label><input name="email" type="email" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Telefon *</label><input name="telefon" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Meslek *</label><input name="meslek" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Şehir *</label><input name="sehir" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Uzmanlık</label><input name="uzmanlik" class="input"></div><div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Adres *</label><textarea name="adres" class="textarea h-24" required></textarea></div><div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Not</label><textarea name="not" class="textarea h-24"></textarea></div></div>`, async fd=>{
-      const payload = { ad: fd.get('ad'), tcno: fd.get('tcno'), dogumTarihi: fd.get('dogumTarihi'), email: fd.get('email'), telefon: fd.get('telefon'), meslek: fd.get('meslek'), sehir: fd.get('sehir'), uzmanlik: fd.get('uzmanlik') || '', adres: fd.get('adres'), not: fd.get('not') || '' };
-      try {
-        await api('/api/applications/', { method: 'POST', headers: authHeaders(true), body: JSON.stringify(payload) });
-        logAction('Sekreter','Yeni başvuru eklendi',String(payload.ad));
-        closeModal();
-        toast('Yeni başvuru eklendi');
-        await syncAllFromApi();
-      } catch(err){
-        console.error(err);
-        toast(err.message || 'Başvuru eklenemedi');
-      }
-    });
-  };
-  window.openMemberModal = function(){
-    openModal('Yeni Üye Ekle', `<div class="grid gap-4 md:grid-cols-2"><div><label class="mb-2 block text-sm text-slate-500">Ad Soyad *</label><input name="ad" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">T.C. Kimlik No *</label><input name="tcno" class="input" pattern="[0-9]{11}" maxlength="11"></div><div><label class="mb-2 block text-sm text-slate-500">Doğum Tarihi</label><input name="dogumTarihi" type="date" class="input"></div><div><label class="mb-2 block text-sm text-slate-500">E-posta *</label><input name="email" type="email" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Telefon *</label><input name="telefon" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Meslek *</label><input name="meslek" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Durum</label><select name="durum" class="select"><option>Aktif</option><option>Pasif</option><option>Başvuru</option></select></div><div><label class="mb-2 block text-sm text-slate-500">Rol</label><select name="rol" class="select"><option>Üye</option><option>Yönetim</option><option>Gönüllü</option><option>Aday</option></select></div><div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Adres</label><textarea name="adres" class="textarea h-24"></textarea></div></div>`, async fd=>{
-      const payload = { ad: fd.get('ad'), tcno: fd.get('tcno') || '', dogumTarihi: fd.get('dogumTarihi') || '', email: fd.get('email'), telefon: fd.get('telefon'), meslek: fd.get('meslek'), durum: fd.get('durum'), rol: fd.get('rol'), adres: fd.get('adres') || '' };
-      try {
-        await api('/members/', { method: 'POST', headers: authHeaders(true), body: JSON.stringify(payload) });
-        logAction('Sekreter','Yeni üye oluşturuldu',String(payload.ad));
-        closeModal();
-        toast('Yeni üye eklendi');
-        await syncAllFromApi();
-      } catch(err){
-        console.error(err);
-        toast(err.message || 'Üye eklenemedi');
-      }
-    });
-  };
-  const openAddMemberBtn = document.getElementById('openAddMember');
-  if(openAddMemberBtn) openAddMemberBtn.onclick = window.openMemberModal;
-  const openAddAppBtn = document.getElementById('openAddApplication');
-  if(openAddAppBtn) openAddAppBtn.onclick = window.openApplicationModal;
-  const openQuickAppBtn = document.getElementById('openQuickApplication');
-  if(openQuickAppBtn) openQuickAppBtn.onclick = window.openApplicationModal;
-  if(getAccess()){
-    ensureAppVisible();
-    syncAllFromApi();
-  }
 })();
 </script>
 
