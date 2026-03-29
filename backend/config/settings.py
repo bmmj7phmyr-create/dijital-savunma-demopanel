@@ -43,8 +43,7 @@ INSTALLED_APPS = [
     'members',
     'applications',
     'dashboard',
-    "corsheaders",
-
+    'corsheaders',
 ]
 SWAGGER_SETTINGS = {
     'USE_SESSION_AUTH': False,
@@ -67,7 +66,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-     "django.middleware.common.CommonMiddleware",
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -162,5 +160,6 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     "https://dijital-savunma-demopanel.onrender.com"
-]
 
+]
+AUTH_USER_MODEL = "accounts.User"
