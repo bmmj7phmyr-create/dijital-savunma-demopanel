@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dijital Savunma • Yönetim Paneli</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <style>
+    body{background:linear-gradient(180deg,#0b1220 0%,#0f172a 18%,#eef2ff 18%,#f8fafc 100%)}
+    .shell{background:rgba(255,255,255,.88);backdrop-filter:blur(14px);box-shadow:0 18px 60px rgba(15,23,42,.10)}
+    .card{background:#fff;box-shadow:0 10px 28px rgba(15,23,42,.07)}
+    .hero{background:linear-gradient(135deg,#0f172a 0%,#1e293b 42%,#1d4ed8 100%)}
+    .glass{background:rgba(15,23,42,.88);backdrop-filter:blur(18px)}
+    .btn{border-radius:16px;padding:.85rem 1rem;font-weight:700;transition:.18s ease}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(15,23,42,.08)}
+    .btn-dark{background:#0f172a;color:#fff}
+    .btn-light{background:#fff;border:1px solid #e2e8f0}
+    .btn-soft{background:#f8fafc;border:1px solid #e2e8f0}
+    .btn-blue{background:#1d4ed8;color:#fff}
+    .input,.select,.textarea{width:100%;border:1px solid #e2e8f0;border-radius:16px;padding:.9rem 1rem;outline:none;background:#fff}
+    .input:focus,.select:focus,.textarea:focus{border-color:#1d4ed8;box-shadow:0 0 0 3px rgba(29,78,216,.09)}
+    .nav-active{background:#fff;color:#0f172a;font-weight:800}
+    .badge{display:inline-flex;align-items:center;border-radius:999px;padding:.28rem .75rem;font-size:.72rem;font-weight:800}
+    .modal-bg{background:rgba(2,6,23,.58);backdrop-filter:blur(4px)}
+    .doc-paper{background:#fff;box-shadow:0 24px 52px rgba(15,23,42,.12);min-height:860px}
+    .metric{font-size:2rem;font-weight:900;line-height:1}
+    .fade-up{animation:fadeUp .45s ease}
+    .mobile-nav-btn{white-space:nowrap}
+    .pager-btn{min-width:40px;height:40px;border-radius:12px;border:1px solid #e2e8f0;background:#fff;font-weight:700}
+    .pager-btn.active{background:#0f172a;color:#fff;border-color:#0f172a}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+    @media (max-width: 1279px){
+      .doc-paper{min-height:auto}
+    }
+    @media (max-width: 767px){
+      body{background:linear-gradient(180deg,#0b1220 0%,#0f172a 10%,#eef2ff 10%,#f8fafc 100%)}
+      .metric{font-size:1.6rem}
+      .btn{padding:.78rem .9rem}
+    }
+  </style>
+</head>
+<body class="text-slate-900">
+  <div id="toastWrap" class="fixed top-5 right-5 z-[100] space-y-3"></div>
+
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-3 sm:p-6">
+    <div class="w-full max-w-6xl grid lg:grid-cols-2 overflow-hidden rounded-[36px] shadow-2xl bg-white">
+      <section class="hero text-white p-6 sm:p-8 lg:p-14">
+        <div class="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm mb-6">Canlı Demo</div>
+        <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black leading-tight">Dijital Savunma<br>Dernek Admin Paneli</h1>
+        <p class="mt-5 text-slate-300 text-lg leading-7 max-w-xl">
+          Üyelik başvuruları, üye yönetimi, aidat ve tahsilat takibi, gelir-gider işlemleri, evrak merkezi, belge görüntüleme, toplu iletişim ve kurumsal PDF rapor üretimi bu panel üzerinden yönetilebilir.
+        </p>
+      </section>
+
+      <section class="p-5 sm:p-8 lg:p-14 flex items-center">
+        <div class="w-full max-w-md mx-auto">
+          <div class="mb-8">
+            <div class="text-sm font-semibold text-slate-500">Yönetici Girişi</div>
+            <h2 class="mt-2 text-3xl font-black">Panele giriş yap</h2>
+            <p class="mt-2 text-slate-500">Demo erişimi hazır.</p>
+          </div>
+          <div class="space-y-4">
+            <div>
+              <label class="mb-2 block text-sm text-slate-500">E-posta</label>
+              <input id="loginEmail" class="input" value="demo@dijitalsavunma.org">
+            </div>
+            <div>
+              <label class="mb-2 block text-sm text-slate-500">Şifre</label>
+              <input id="loginPassword" class="input" type="password" value="123456">
+            </div>
+            <button id="loginBtn" class="w-full rounded-2xl py-4 text-lg font-bold text-white hero">Admin Panele Gir</button>
+          </div>
+          <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+            Demo hesap: <strong>demo@dijitalsavunma.org</strong><br>
+            Şifre: <strong>123456</strong>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="app" class="hidden min-h-screen">
+    <div class="flex min-h-screen">
+      <aside class="hidden w-80 p-5 xl:block">
+        <div class="glass sticky top-5 rounded-[32px] p-6 text-white">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-xs uppercase tracking-[0.30em] text-slate-400">Tek Kullanıcılı Panel</div>
+              <h1 class="mt-2 text-2xl font-black">Dijital Savunma</h1>
+            </div>
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-xl">🛡️</div>
+          </div>
+          <div class="mt-8 space-y-2">
+            <button class="nav-btn nav-active w-full rounded-2xl px-4 py-3 text-left" data-page="dashboard">Dashboard</button>
+            <button class="nav-btn w-full rounded-2xl px-4 py-3 text-left hover:bg-white/10" data-page="uyeler">Üye Yönetimi</button>
+            <button class="nav-btn w-full rounded-2xl px-4 py-3 text-left hover:bg-white/10" data-page="muhasebe">Muhasebe</button>
+            <button class="nav-btn w-full rounded-2xl px-4 py-3 text-left hover:bg-white/10" data-page="iletisim">Toplu İletişim</button>
+            <button class="nav-btn w-full rounded-2xl px-4 py-3 text-left hover:bg-white/10" data-page="evrak">Evrak Merkezi</button>
+            <button class="nav-btn w-full rounded-2xl px-4 py-3 text-left hover:bg-white/10" data-page="denetim">Denetim</button>
+          </div>
+          <button id="logoutBtn" class="mt-8 w-full rounded-2xl bg-white/10 py-3 hover:bg-white/20">Çıkış Yap</button>
+        </div>
+      </aside>
+
+      <main class="flex-1 p-3 sm:p-4 lg:p-6 xl:p-8">
+
+        <div class="mb-4 xl:hidden">
+          <div class="shell rounded-[24px] p-3">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <div class="text-xs uppercase tracking-[0.20em] text-slate-400">Mobil Menü</div>
+                <div class="mt-1 text-lg font-black text-slate-900">Hızlı Geçiş</div>
+              </div>
+              <button id="mobileLogoutBtn" class="btn btn-soft !py-2 !px-3">Çıkış</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              <button class="mobile-nav-btn btn btn-soft !py-3 !px-3" data-page="dashboard">Dashboard</button>
+              <button class="mobile-nav-btn btn btn-soft !py-3 !px-3" data-page="uyeler">Üyeler</button>
+              <button class="mobile-nav-btn btn btn-soft !py-3 !px-3" data-page="muhasebe">Muhasebe</button>
+              <button class="mobile-nav-btn btn btn-soft !py-3 !px-3" data-page="iletisim">İletişim</button>
+              <button class="mobile-nav-btn btn btn-soft !py-3 !px-3" data-page="evrak">Evrak</button>
+              <button class="mobile-nav-btn btn btn-soft !py-3 !px-3" data-page="denetim">Denetim</button>
+            </div>
+          </div>
+        </div>
+
+        <header class="shell rounded-[32px] p-4 sm:p-6 mb-6 fade-up">
+          <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+            <div>
+              <div class="text-sm text-slate-500">Yönetici Kontrol Alanı</div>
+              <h2 class="mt-1 text-3xl lg:text-4xl font-black">Dernek Admin Paneli</h2>
+              <p class="mt-2 text-slate-500">Üyelik başvuruları, üye yönetimi, aidat ve tahsilat takibi, gelir-gider işlemleri, evrak merkezi, toplu iletişim, belge görüntüleme ve kurumsal PDF rapor üretimi bu panel üzerinden yönetilebilir.</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <button id="openQuickApplication" class="btn btn-light">Başvuru Ekle</button>
+              <button id="openQuickFinance" class="btn btn-light">Gelir / Gider Ekle</button>
+              <button id="exportBtn" class="btn btn-dark">Kurumsal Rapor PDF</button>
+            </div>
+          </div>
+        </header>
+
+        <section id="dashboard" class="page space-y-6 fade-up">
+          <div class="grid grid-cols-1 gap-5 md:grid-cols-2 2xl:grid-cols-6">
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">Toplam Üye</div><div id="statTotalMembers" class="metric mt-2">0</div><div id="statMembersHelper" class="mt-3 text-sm text-emerald-600">-</div></div>
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">Bekleyen Başvuru</div><div id="statPendingApplications" class="metric mt-2">0</div><div class="mt-3 text-sm text-amber-600">İnceleme kuyruğu</div></div>
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">Kasa + Banka</div><div id="statBalance" class="metric mt-2">₺0</div><div class="mt-3 text-sm text-emerald-600">Canlı bakiye</div></div>
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">Aidat Tahsilat</div><div id="statCollectionRate" class="metric mt-2">%0</div><div class="mt-4 h-2 overflow-hidden rounded-full bg-slate-100"><div id="collectionBar" class="h-full bg-slate-900"></div></div></div>
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">Belge Merkezi</div><div id="statDocs" class="metric mt-2">0</div><div class="mt-3 text-sm text-slate-600">Kayıtlı evrak</div></div>
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">İşlem Logu</div><div id="statLogs" class="metric mt-2">0</div><div class="mt-3 text-sm text-slate-600">Denetim izi</div></div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-6 2xl:grid-cols-4">
+            <div class="card rounded-[30px] p-6 2xl:col-span-2">
+              <div class="mb-5 flex items-center justify-between">
+                <div><h3 class="text-xl font-bold">Gelir / Gider Performansı</h3><p class="mt-1 text-sm text-slate-500">Canlı finansal görünüm</p></div>
+                <div class="text-xs text-slate-500">Son 12 dönem</div>
+              </div>
+              <canvas id="financeChart" height="120"></canvas>
+            </div>
+            <div class="card rounded-[30px] p-6">
+              <div class="mb-5"><h3 class="text-xl font-bold">Gelir Dağılımı</h3><p class="mt-1 text-sm text-slate-500">Kategori bazlı</p></div>
+              <canvas id="incomeChart" height="260"></canvas>
+            </div>
+            <div class="card rounded-[30px] p-6">
+              <h3 class="mb-5 text-xl font-bold">Yönetici Özeti</h3>
+              <div class="space-y-4 text-sm">
+                <div class="flex justify-between"><span>Aktif Üye</span><strong id="sumActive">0</strong></div>
+                <div class="flex justify-between"><span>Pasif Üye</span><strong id="sumPassive">0</strong></div>
+                <div class="flex justify-between"><span>Aday Başvuru</span><strong id="sumApplicants">0</strong></div>
+                <div class="flex justify-between"><span>Bu Ay Tahsilat</span><strong id="sumThisMonthIncome">₺0</strong></div>
+                <div class="flex justify-between"><span>Bu Ay Gider</span><strong id="sumThisMonthExpense">₺0</strong></div>
+                <div class="flex justify-between"><span>Gönderilen İleti</span><strong id="sumComms">0</strong></div>
+              </div>
+              <div class="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="text-xs uppercase tracking-wide text-slate-400">Yönetim Notu</div>
+                <div id="insightBox" class="mt-2 font-semibold">-</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-6 2xl:grid-cols-3">
+            <div class="card rounded-[30px] p-6 2xl:col-span-2">
+              <div class="mb-5"><h3 class="text-xl font-bold">Üye Hareketleri</h3><p class="mt-1 text-sm text-slate-500">Yeni ve pasif üyeler</p></div>
+              <canvas id="memberChart" height="120"></canvas>
+            </div>
+            <div class="card rounded-[30px] p-6">
+              <h3 class="mb-5 text-xl font-bold">Hızlı PDF İşlemleri</h3>
+              <div class="space-y-3">
+                <button id="generateDebtPdfBtn" class="btn btn-amber w-full">Aidat Borç Bildirimi PDF</button>
+                <button id="generateFinancePdfBtn" class="btn btn-light w-full">Finans Özeti PDF</button>
+                <button id="generateApplicationsPdfBtn" class="btn btn-light w-full">Başvuru Listesi PDF</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-6 2xl:grid-cols-2">
+            <div class="card rounded-[30px] p-6">
+              <div class="mb-5 flex items-center justify-between"><h3 class="text-xl font-bold">Son Belgeler</h3><button class="btn btn-soft !py-2 !px-3" onclick="openDocumentCenter()">Tümünü Gör</button></div>
+              <div id="recentDocsList" class="space-y-3"></div>
+            </div>
+            <div class="card rounded-[30px] p-6">
+              <div class="mb-5 flex items-center justify-between"><h3 class="text-xl font-bold">Yönetim Ajandası</h3><span class="text-xs text-slate-500">Canlı öneri</span></div>
+              <div id="agendaList" class="space-y-3"></div>
+            </div>
+          </div>
+        </section>
+
+        <section id="uyeler" class="page hidden space-y-6">
+          <div class="card rounded-[30px] p-6">
+            <div class="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div><h3 class="text-2xl font-bold">Detaylı Üye Yönetimi</h3><p class="mt-1 text-slate-500">Başvuru, durum, rol, aidat ve borç takibi</p></div>
+              <div class="flex flex-wrap gap-3">
+                <input id="memberSearch" class="input min-w-[220px]" placeholder="Üye ara..." />
+                <select id="memberFilter" class="select min-w-[180px]"><option value="Tümü">Tüm Durumlar</option><option value="Aktif">Aktif</option><option value="Pasif">Pasif</option><option value="Başvuru">Başvuru</option></select>
+                <button id="openAddMember" class="btn btn-dark">Yeni Üye</button>
+              </div>
+            </div>
+            <div class="overflow-auto">
+              <table class="w-full text-sm">
+                <thead><tr class="border-b text-left text-slate-500"><th class="py-4">Ad Soyad</th><th class="py-4">Meslek</th><th class="py-4">Durum</th><th class="py-4">Rol</th><th class="py-4">Aidat</th><th class="py-4">Borç</th><th class="py-4">İşlem</th></tr></thead>
+                <tbody id="membersTableBody"></tbody>
+              </table>
+            </div>
+            <div id="membersPagination" class="mt-5 flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="card rounded-[30px] p-6">
+            <div class="mb-5 flex items-center justify-between"><h3 class="text-2xl font-bold">Yeni Başvurular</h3><button id="openAddApplication" class="btn btn-light">Başvuru Oluştur</button></div>
+            <div id="applicationsGrid" class="grid gap-5 md:grid-cols-2 xl:grid-cols-3"></div>
+            <div id="applicationsPagination" class="mt-5 flex flex-wrap gap-2"></div>
+          </div>
+        </section>
+
+        <section id="muhasebe" class="page hidden space-y-6">
+          <div class="grid grid-cols-1 gap-5 md:grid-cols-4">
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">Aidat Geliri</div><div id="sumAidatIncome" class="mt-2 text-4xl font-black">₺0</div></div>
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">Bağış Geliri</div><div id="sumDonationIncome" class="mt-2 text-4xl font-black">₺0</div></div>
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">Toplam Gider</div><div id="sumExpenses" class="mt-2 text-4xl font-black">₺0</div></div>
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">Açık Aidat</div><div id="sumDebt" class="mt-2 text-4xl font-black">₺0</div></div>
+          </div>
+          <div class="card rounded-[30px] p-6">
+            <div class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div><h3 class="text-2xl font-bold">Muhasebe Hareketleri</h3><p class="mt-1 text-slate-500">Gelir, gider, banka ve kasa takibi</p></div>
+              <div class="flex flex-wrap gap-3"><input id="financeSearch" class="input min-w-[220px]" placeholder="Hareket ara..." /><button id="openAddFinance" class="btn btn-dark">Yeni Hareket</button><button id="openAddFinanceDocument" class="btn btn-light">Yeni Evrak +</button></div>
+            </div>
+            <div class="overflow-auto">
+              <table class="w-full text-sm">
+                <thead><tr class="border-b text-left text-slate-500"><th class="py-4">Kod</th><th class="py-4">Tip</th><th class="py-4">Kategori</th><th class="py-4">Açıklama</th><th class="py-4">Kanal</th><th class="py-4">Tutar</th><th class="py-4">Tarih</th><th class="py-4">İşlem</th></tr></thead>
+                <tbody id="financeTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card rounded-[30px] p-6">
+            <div class="mb-5 flex items-center justify-between">
+              <div><h3 class="text-2xl font-bold">Muhasebe Evrakları</h3><p class="mt-1 text-slate-500">Yüklenen PDF belgeler, dekontlar ve mali evraklar</p></div>
+              <button id="openAddFinanceDocumentSecondary" class="btn btn-soft">PDF Evrak Yükle</button>
+            </div>
+            <div id="financeDocumentsList" class="grid gap-4 md:grid-cols-2"></div>
+          </div>
+        </section>
+
+        <section id="iletisim" class="page hidden space-y-6">
+          <div class="grid grid-cols-1 gap-6 2xl:grid-cols-3">
+            <div class="card rounded-[30px] p-6 2xl:col-span-2">
+              <h3 class="mb-5 text-2xl font-bold">Toplu İletişim</h3>
+              <div class="grid gap-4 md:grid-cols-2">
+                <div><label class="mb-2 block text-sm text-slate-500">Hedef Grup</label><select id="commTarget" class="select"><option>Aktif Üyeler</option><option>Aidat Borcu Olanlar</option><option>Yeni Başvurular</option><option>Tüm Üyeler</option></select></div>
+                <div><label class="mb-2 block text-sm text-slate-500">Gönderim Tipi</label><select id="commType" class="select"><option>SMS</option><option>E-posta</option><option>WhatsApp</option></select></div>
+              </div>
+              <div class="mt-4"><label class="mb-2 block text-sm text-slate-500">Mesaj İçeriği</label><textarea id="commMessage" class="textarea h-40">Sayın [AD SOYAD], derneğimize ait güncel aidat bakiyeniz [TUTAR] TL'dir. Bilgilerinize sunarız.</textarea></div>
+              <div class="mt-5 flex gap-3"><button id="sendCommBtn" class="btn btn-dark">Gönderimi Simüle Et</button><button id="saveTemplateBtn" class="btn btn-soft">Taslak Kaydet</button></div>
+            </div>
+            <div class="card rounded-[30px] p-6">
+              <h3 class="mb-5 text-2xl font-bold">Gönderim Özeti</h3>
+              <div class="space-y-4 text-sm">
+                <div class="flex justify-between"><span>Hazır Taslak</span><strong id="templateCount">0</strong></div>
+                <div class="flex justify-between"><span>Bugün Gönderilen</span><strong id="todayCommCount">0</strong></div>
+                <div class="flex justify-between"><span>Toplam İletişim</span><strong id="totalCommCount">0</strong></div>
+                <div class="flex justify-between"><span>Başarılı Oran</span><strong>%98</strong></div>
+              </div>
+            </div>
+          </div>
+          <div class="card rounded-[30px] p-6">
+            <div class="mb-5 flex items-center justify-between"><h3 class="text-2xl font-bold">İletişim Geçmişi</h3></div>
+            <div class="overflow-auto"><table class="w-full text-sm"><thead><tr class="border-b text-left text-slate-500"><th class="py-4">Tarih</th><th class="py-4">Tip</th><th class="py-4">Hedef</th><th class="py-4">Özet</th></tr></thead><tbody id="communicationsTableBody"></tbody></table></div>
+          </div>
+        </section>
+
+        <section id="evrak" class="page hidden space-y-6">
+          <div class="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <div class="card rounded-[28px] p-5"><h3 class="text-xl font-bold">Karar Defteri</h3><div id="countKarar" class="mt-4 text-3xl font-black">0</div></div>
+            <div class="card rounded-[28px] p-5"><h3 class="text-xl font-bold">Gelen Evrak</h3><div id="countGelen" class="mt-4 text-3xl font-black">0</div></div>
+            <div class="card rounded-[28px] p-5"><h3 class="text-xl font-bold">Giden Evrak</h3><div id="countGiden" class="mt-4 text-3xl font-black">0</div></div>
+            <div class="card rounded-[28px] p-5"><h3 class="text-xl font-bold">Oluşturulan PDF</h3><div id="countGenerated" class="mt-4 text-3xl font-black">0</div></div>
+          </div>
+          <div class="card rounded-[30px] p-6">
+            <div class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div><h3 class="text-2xl font-bold">Evrak Merkezi</h3><p class="mt-1 text-slate-500">Kayıtlı evraklar ve oluşturulan PDF belgeler</p></div>
+              <div class="flex gap-3"><button id="openAddDocument" class="btn btn-dark">Yeni Evrak +</button></div>
+            </div>
+            <div class="overflow-auto"><table class="w-full text-sm"><thead><tr class="border-b text-left text-slate-500"><th class="py-4">No</th><th class="py-4">Tür</th><th class="py-4">Konu</th><th class="py-4">Tarih</th><th class="py-4">İşlem</th></tr></thead><tbody id="documentsTableBody"></tbody></table></div>
+          </div>
+        </section>
+
+        <section id="denetim" class="page hidden space-y-6">
+          <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">Rol Sayısı</div><div class="mt-2 text-4xl font-black">5</div></div>
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">İşlem Kaydı</div><div id="logCount" class="mt-2 text-4xl font-black">0</div></div>
+            <div class="card rounded-[28px] p-5"><div class="text-sm text-slate-500">Son Yedekleme</div><div id="lastBackup" class="mt-2 text-4xl font-black">Bugün</div></div>
+          </div>
+          <div class="card rounded-[30px] p-6">
+            <div class="mb-5 flex items-center justify-between"><h3 class="text-2xl font-bold">İşlem Günlüğü</h3><button id="backupBtn" class="btn btn-light">Yedekleme Oluştur</button></div>
+            <div class="overflow-auto"><table class="w-full text-sm"><thead><tr class="border-b text-left text-slate-500"><th class="py-4">Saat</th><th class="py-4">Kullanıcı</th><th class="py-4">İşlem</th><th class="py-4">Detay</th></tr></thead><tbody id="logsTableBody"></tbody></table></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="modal" class="hidden fixed inset-0 z-[90] items-center justify-center p-4">
+    <div class="modal-bg absolute inset-0"></div>
+    <div class="relative max-h-[90vh] w-full max-w-5xl overflow-auto rounded-[28px] bg-white shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-200 px-6 py-5">
+        <h3 id="modalTitle" class="text-2xl font-black">Form</h3>
+        <button id="closeModal" class="h-10 w-10 rounded-full bg-slate-100">✕</button>
+      </div>
+      <form id="modalForm" class="space-y-4 p-6"></form>
+    </div>
+  </div>
+
+<script>
+const STORE_KEY='dijitalsavunma_premium_v1';
+const todayISO=()=>new Date().toISOString().slice(0,10);
+const nowTime=()=>new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+const money=n=>'₺'+Number(n||0).toLocaleString('tr-TR');
+const monthKey=d=>(d||'').slice(0,7);
+const currentMonth=()=>new Date().toISOString().slice(0,7);
+const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const badgeClass=status=>({'Aktif':'bg-emerald-100 text-emerald-700','Pasif':'bg-slate-200 text-slate-700','Başvuru':'bg-amber-100 text-amber-700','Bekliyor':'bg-amber-100 text-amber-700','Onaylandı':'bg-emerald-100 text-emerald-700','Reddedildi':'bg-rose-100 text-rose-700','Ödendi':'bg-emerald-100 text-emerald-700','BekliyorAidat':'bg-amber-100 text-amber-700','Kısmi':'bg-blue-100 text-blue-700'}[status]||'bg-slate-100 text-slate-700');
+
+const SEED={
+  members:[
+    {id:'U-1001',ad:'Ayşe Yıldız',email:'ayse@example.org',telefon:'05321112233',tcno:'11111111111',dogumTarihi:'1992-04-14',adres:'Kadıköy / İstanbul',meslek:'Siber Güvenlik Uzmanı',durum:'Aktif',rol:'Üye',aidat:'Ödendi',borc:0,giris:'2026-01-14'},
+    {id:'U-1002',ad:'Mehmet Kaya',email:'mehmet@example.org',telefon:'05314456677',tcno:'22222222222',dogumTarihi:'1989-09-02',adres:'Çankaya / Ankara',meslek:'Avukat',durum:'Aktif',rol:'Yönetim',aidat:'Bekliyor',borc:1200,giris:'2026-02-03'},
+    {id:'U-1003',ad:'Zeynep Arslan',email:'zeynep@example.org',telefon:'05412224488',tcno:'33333333333',dogumTarihi:'1994-12-08',adres:'Bornova / İzmir',meslek:'İletişim Danışmanı',durum:'Pasif',rol:'Gönüllü',aidat:'Yok',borc:0,giris:'2025-11-26'},
+    {id:'U-1004',ad:'Can Demir',email:'can@example.org',telefon:'05077008090',tcno:'44444444444',dogumTarihi:'1997-06-17',adres:'Beşiktaş / İstanbul',meslek:'Yazılım Geliştirici',durum:'Aktif',rol:'Üye',aidat:'Kısmi',borc:450,giris:'2026-03-11'}
+  ],
+  applications:[
+    {id:'B-901',ad:'Mert Acar',email:'mert.acar@mail.com',telefon:'05320000001',tcno:'55555555555',dogumTarihi:'2001-04-08',adres:'Kadıköy / İstanbul',meslek:'Öğrenci',sehir:'İstanbul',uzmanlik:'Siber güvenlik',not:'Atölyelere katılmak ve gönüllü olmak istiyorum.',iletisimIzni:true,tarih:'2026-03-22',durum:'Bekliyor'},
+    {id:'B-902',ad:'Selin Öz',email:'selinoz@mail.com',telefon:'05320000002',tcno:'66666666666',dogumTarihi:'1996-09-12',adres:'Çankaya / Ankara',meslek:'Veri Analisti',sehir:'Ankara',uzmanlik:'Veri analizi',not:'Topluluğa katkı sunmak istiyorum.',iletisimIzni:false,tarih:'2026-03-23',durum:'Bekliyor'}
+  ],
+  finance:[
+    {id:'G-122',tip:'Gelir',kategori:'Aidat',aciklama:'Mart aidat tahsilatı',kanal:'Banka',tutar:7200,tarih:'2026-03-04'},
+    {id:'G-123',tip:'Gelir',kategori:'Bağış',aciklama:'Bireysel destek',kanal:'Banka',tutar:3500,tarih:'2026-03-07'},
+    {id:'E-411',tip:'Gider',kategori:'Yazılım',aciklama:'Sunucu hizmeti',kanal:'Kredi Kartı',tutar:1800,tarih:'2026-03-09'},
+    {id:'E-412',tip:'Gider',kategori:'İletişim',aciklama:'SMS toplu gönderim',kanal:'Banka',tutar:950,tarih:'2026-03-10'},
+    {id:'E-413',tip:'Gider',kategori:'Etkinlik',aciklama:'Salon rezervasyonu',kanal:'Kasa',tutar:4200,tarih:'2026-03-14'},
+    {id:'G-124',tip:'Gelir',kategori:'Aidat',aciklama:'Şubat gecikmeli aidat tahsilatı',kanal:'Banka',tutar:2400,tarih:'2026-03-19'}
+  ],
+  communications:[{tarih:'2026-03-24 10:12',tip:'SMS',hedef:'Aidat Borcu Olanlar',ozet:'Mart aidat hatırlatması gönderildi'}],
+  templates:[{id:'T-1',ad:'Aidat Hatırlatma',tip:'SMS'}],
+  documents:[
+    {id:'EV-201',tur:'Gelen',konu:'Etkinlik iş birliği teklifi',tarih:'2026-03-18',body:'Kurumlar arası etkinlik iş birliği talebine ilişkin yazı kayıt altına alınmıştır. Yönetici bu belge üzerinden teklif detayını inceleyebilir, not düşebilir ve değerlendirme kararı oluşturabilir.'},
+    {id:'EV-202',tur:'Karar',konu:'Yeni üye değerlendirme kararı',tarih:'2026-03-19',body:'Yönetici incelemesi sonrasında aday üyelik başvurularının uygunluk kriterleri doğrultusunda değerlendirilmesine ilişkin karar kaydıdır. Bu belge üzerinde karar özeti, tarih ve işlem gerekçesi görüntülenir.'},
+    {id:'EV-203',tur:'Giden',konu:'Kurumsal bilgilendirme yazısı',tarih:'2026-03-21',body:'Kurumsal iletişim kapsamında gönderilen bilgilendirme yazısının kayıt örneğidir. Panel yöneticisi belge içeriğini görüntüleyebilir ve belgeyi işlem geçmişiyle birlikte saklayabilir.'}
+  ],
+  logs:[
+    {saat:'09:12',kullanici:'Sekreter',islem:'Yeni başvuru eklendi',detay:'B-902 - Selin Öz'},
+    {saat:'10:40',kullanici:'Sayman',islem:'Gelir kaydı oluşturuldu',detay:'G-123 - Bireysel destek'}
+  ]
+};
+
+function clone(o){return JSON.parse(JSON.stringify(o));}
+let memoryState = null;
+function loadState(){
+  try{
+    const raw = window.localStorage ? localStorage.getItem(STORE_KEY) : null;
+    if(raw) return JSON.parse(raw);
+  }catch(err){
+    console.warn('localStorage okunamadı, geçici hafıza modu kullanılacak.', err);
+  }
+  return memoryState ? clone(memoryState) : clone(SEED);
+}
+let state=loadState();
+function saveState(){
+  try{
+    if(window.localStorage){
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      return;
+    }
+  }catch(err){
+    console.warn('localStorage kaydı başarısız, geçici hafıza modu kullanılacak.', err);
+  }
+  memoryState = clone(state);
+}
+function logAction(kullanici,islem,detay){state.logs.unshift({saat:nowTime(),kullanici,islem,detay});saveState();}
+function formatDateTR(iso){if(!iso) return '-'; const d=new Date((iso.length<=10?iso+'T12:00:00':iso)); return d.toLocaleDateString('tr-TR');}
+function nextId(prefix,source){const nums=source.map(x=>parseInt(String(x.id||'').replace(/\D/g,''),10)).filter(Boolean); const n=(nums.length?Math.max(...nums):100)+1; return `${prefix}-${n}`;}
+function toast(message){const wrap=document.getElementById('toastWrap');const el=document.createElement('div');el.className='card rounded-2xl px-4 py-3 text-sm font-semibold';el.textContent=message;wrap.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(-5px)';el.style.transition='.18s ease'},2200);setTimeout(()=>el.remove(),2500);}
+function countGeneratedDocs(){return state.documents.filter(d=>d.generated).length;}
+
+function handleLogin(){
+  const e=document.getElementById('loginEmail').value.trim();
+  const p=document.getElementById('loginPassword').value.trim();
+  if(e==='demo@dijitalsavunma.org' && p==='123456'){
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    try{ renderAll(); }catch(err){ console.error(err); }
+    toast('Panele giriş yapıldı');
+  }else{
+    toast('Giriş bilgileri hatalı');
+  }
+}
+const loginBtn = document.getElementById('loginBtn');
+if(loginBtn){ loginBtn.onclick = handleLogin; }
+document.getElementById('logoutBtn').onclick=()=>{document.getElementById('app').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden');};
+
+
+document.querySelectorAll('.mobile-nav-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+    document.getElementById(btn.dataset.page).classList.remove('hidden');
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('nav-active'));
+    const sideBtn = document.querySelector(`.nav-btn[data-page="${btn.dataset.page}"]`);
+    if(sideBtn) sideBtn.classList.add('nav-active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+});
+const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+if(mobileLogoutBtn){
+  mobileLogoutBtn.onclick=()=>{document.getElementById('app').classList.add('hidden');document.getElementById('loginScreen').classList.remove('hidden');};
+}
+
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+    document.getElementById(btn.dataset.page).classList.remove('hidden');
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('nav-active'));
+    btn.classList.add('nav-active');
+  };
+});
+
+const modal=document.getElementById('modal'), modalTitle=document.getElementById('modalTitle'), modalForm=document.getElementById('modalForm');
+function closeModal(){modal.classList.add('hidden');modal.classList.remove('flex');modalForm.innerHTML='';}
+document.getElementById('closeModal').onclick=closeModal;
+modal.addEventListener('click',e=>{if(e.target===modal || e.target.classList.contains('modal-bg')) closeModal();});
+function openModal(title,html,onSubmit,showFooter=true){
+  modalTitle.textContent=title;
+  modalForm.innerHTML=html + (showFooter?`<div class="flex gap-3 pt-2"><button class="btn btn-dark" type="submit">Kaydet</button><button class="btn btn-soft" type="button" id="cancelModalBtn">İptal</button></div>`:'');
+  modal.classList.remove('hidden'); modal.classList.add('flex');
+  modalForm.onsubmit=e=>{e.preventDefault(); if(onSubmit) onSubmit(new FormData(modalForm));};
+  const c=document.getElementById('cancelModalBtn'); if(c) c.onclick=closeModal;
+}
+
+let financeChart, incomeChart, memberChart;
+let memberPage=1;
+let applicationPage=1;
+const MEMBER_PAGE_SIZE=8;
+const APPLICATION_PAGE_SIZE=6;
+function initCharts(){
+  Chart.defaults.font.family='Inter, ui-sans-serif, system-ui, sans-serif';
+  Chart.defaults.color='#475569';
+  financeChart=new Chart(document.getElementById('financeChart'),{type:'line',data:{labels:[],datasets:[{label:'Gelir',data:[],borderColor:'#0f172a',backgroundColor:'rgba(15,23,42,.08)',fill:true,tension:.35,borderWidth:3,pointRadius:3},{label:'Gider',data:[],borderColor:'#64748b',backgroundColor:'rgba(100,116,139,.08)',fill:true,tension:.35,borderWidth:3,pointRadius:3}]},options:{plugins:{legend:{position:'bottom'}},scales:{y:{grid:{color:'rgba(148,163,184,.2)'}},x:{grid:{display:false}}}}});
+  incomeChart=new Chart(document.getElementById('incomeChart'),{type:'doughnut',data:{labels:[],datasets:[{data:[],backgroundColor:['#0f172a','#334155','#64748b','#cbd5e1','#94a3b8','#a5b4fc'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom'}},cutout:'68%'}});
+  memberChart=new Chart(document.getElementById('memberChart'),{type:'bar',data:{labels:['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'],datasets:[{label:'Yeni Üye',data:new Array(12).fill(0),backgroundColor:'#0f172a',borderRadius:10},{label:'Pasif Üye',data:new Array(12).fill(0),backgroundColor:'#94a3b8',borderRadius:10}]},options:{plugins:{legend:{position:'bottom'}},scales:{y:{grid:{color:'rgba(148,163,184,.2)'}},x:{grid:{display:false}}}}});
+}
+
+function renderMembers(){
+  const q=(document.getElementById('memberSearch').value||'').toLowerCase();
+  const f=(document.getElementById('memberFilter').value||'Tümü');
+  const memberList = state.members.filter(m=>{
+    const matchesQ=(`${m.ad} ${m.email} ${m.meslek} ${m.rol}`).toLowerCase().includes(q);
+    const matchesF=f==='Tümü'?true:m.durum===f;
+    return matchesQ && matchesF;
+  }).sort((a,b)=>String(a.ad||'').localeCompare(String(b.ad||''),'tr'));
+
+  const applicationList = f==='Başvuru'
+    ? state.applications.filter(a=>((`${a.ad} ${a.email} ${a.meslek} ${a.sehir}`).toLowerCase().includes(q) && a.durum!=='Reddedildi')).sort((a,b)=>String(a.ad||'').localeCompare(String(b.ad||''),'tr'))
+    : [];
+
+  const combined = [
+    ...memberList.map(m=>({type:'member', data:m})),
+    ...applicationList.map(a=>({type:'application', data:a}))
+  ];
+
+  const totalPages=Math.max(1, Math.ceil(combined.length / MEMBER_PAGE_SIZE));
+  if(memberPage>totalPages) memberPage=totalPages;
+  const start=(memberPage-1)*MEMBER_PAGE_SIZE;
+  const visible=combined.slice(start,start+MEMBER_PAGE_SIZE);
+
+  document.getElementById('membersTableBody').innerHTML=visible.map(item=>{
+    if(item.type==='member'){
+      const m=item.data;
+      return `
+      <tr class="border-b">
+        <td class="py-4 font-semibold">${escapeHtml(m.ad)}</td>
+        <td>${escapeHtml(m.meslek||'-')}</td>
+        <td><span class="badge ${badgeClass(m.durum)}">${escapeHtml(m.durum)}</span></td>
+        <td>${escapeHtml(m.rol||'-')}</td>
+        <td><span class="badge ${badgeClass(m.aidat==='Bekliyor'?'BekliyorAidat':m.aidat)}">${escapeHtml(m.aidat||'-')}</span></td>
+        <td>${money(m.borc)}</td>
+        <td>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-soft !py-2 !px-3" onclick="openMemberProfile('${m.id}')">Profil</button>
+            <button class="btn btn-soft !py-2 !px-3" onclick="openAidatModal('${m.id}')">Aidat</button>
+            <button class="btn btn-light !py-2 !px-3" onclick="createDebtDoc('${m.id}')">Bildirim PDF</button>
+            <button class="btn btn-dark !py-2 !px-3" onclick="createReceiptDoc('${m.id}')">Makbuz PDF</button>
+          </div>
+        </td>
+      </tr>`;
+    } else {
+      const a=item.data;
+      return `
+      <tr class="border-b bg-amber-50/40">
+        <td class="py-4 font-semibold">${escapeHtml(a.ad)}</td>
+        <td>${escapeHtml(a.meslek||'-')}</td>
+        <td><span class="badge ${badgeClass('Başvuru')}">Başvuru</span></td>
+        <td>Aday</td>
+        <td>-</td>
+        <td>-</td>
+        <td><div class="flex flex-wrap gap-2"><button class="btn btn-soft !py-2 !px-3" onclick="openApplicationDetail('${a.id}')">Detay</button><button class="btn btn-dark !py-2 !px-3" onclick="approveApplication('${a.id}')">Onayla</button><button class="btn btn-soft !py-2 !px-3" onclick="rejectApplication('${a.id}')">Reddet</button></div></td>
+      </tr>`;
+    }
+  }).join('') || `<tr><td colspan="7" class="py-6 text-center text-slate-500">Kayıt bulunamadı</td></tr>`;
+
+  document.getElementById('membersPagination').innerHTML = Array.from({length: totalPages}, (_,i)=>`<button class="pager-btn ${memberPage===i+1?'active':''}" onclick="setMemberPage(${i+1})">${i+1}</button>`).join('');
+}
+
+function renderApplications(){
+  const list=state.applications.slice().sort((a,b)=>String(a.ad||'').localeCompare(String(b.ad||''),'tr'));
+  const totalPages=Math.max(1, Math.ceil(list.length / APPLICATION_PAGE_SIZE));
+  if(applicationPage>totalPages) applicationPage=totalPages;
+  const start=(applicationPage-1)*APPLICATION_PAGE_SIZE;
+  const visible=list.slice(start,start+APPLICATION_PAGE_SIZE);
+  document.getElementById('applicationsGrid').innerHTML=visible.map(a=>`
+    <div class="card rounded-[28px] border border-slate-100 p-5">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="text-lg font-bold">${escapeHtml(a.ad)}</div>
+          <div class="mt-1 text-slate-500">${escapeHtml(a.meslek||'-')} · ${escapeHtml(a.sehir||'-')}</div>
+          <div class="text-sm text-slate-500">${escapeHtml(a.email||'-')}</div>
+          <div class="mt-1 text-xs text-slate-400">T.C.: ${escapeHtml(a.tcno||'-')} · GSM: ${escapeHtml(a.telefon||'-')}</div>
+        </div>
+        <span class="badge ${badgeClass(a.durum)}">${escapeHtml(a.durum)}</span>
+      </div>
+      <div class="mt-3 text-sm text-slate-400">Başvuru: ${escapeHtml(a.tarih)}</div>
+      <div class="mt-5 grid grid-cols-3 gap-2">
+        <button class="btn btn-soft !py-3" onclick="openApplicationDetail('${a.id}')">Detay</button>
+        <button class="btn btn-dark !py-3" onclick="approveApplication('${a.id}')">Onayla</button>
+        <button class="btn btn-soft !py-3" onclick="rejectApplication('${a.id}')">Reddet</button>
+      </div>
+    </div>`).join('') || `<div class="text-slate-500">Bekleyen başvuru yok.</div>`;
+  document.getElementById('applicationsPagination').innerHTML = Array.from({length: totalPages}, (_,i)=>`<button class="pager-btn ${applicationPage===i+1?'active':''}" onclick="setApplicationPage(${i+1})">${i+1}</button>`).join('');
+}
+
+function renderFinance(){
+  const q=(document.getElementById('financeSearch').value||'').toLowerCase();
+  const list=state.finance.filter(f=>(`${f.id} ${f.tip} ${f.kategori} ${f.aciklama} ${f.kanal}`).toLowerCase().includes(q));
+  document.getElementById('financeTableBody').innerHTML=list.map(f=>{
+    const linkedDoc = state.documents.find(d=>d.financeTransactionId===f.id);
+    return `
+    <tr class="border-b">
+      <td class="py-4">${escapeHtml(f.id)}</td>
+      <td class="${f.tip==='Gelir'?'text-emerald-600':'text-rose-600'} font-semibold">${escapeHtml(f.tip)}</td>
+      <td>${escapeHtml(f.kategori)}</td>
+      <td>${escapeHtml(f.aciklama)}</td>
+      <td>${escapeHtml(f.kanal)}</td>
+      <td>${money(f.tutar)}</td>
+      <td>${formatDateTR(f.tarih)}</td>
+      <td>
+        <div class="flex flex-wrap gap-2">
+          ${linkedDoc ? `<button class="btn btn-soft !py-2 !px-3" onclick="viewDocument('${linkedDoc.id}')">Görüntüle</button><button class="btn btn-light !py-2 !px-3" onclick="downloadStoredDocument('${linkedDoc.id}')">PDF İndir</button>` : `<button class="btn btn-soft !py-2 !px-3" onclick="openFinanceDocAttachModal('${f.id}')">PDF Ekle</button>`}
+          <button class="btn btn-soft !py-2 !px-3" onclick="deleteFinance('${f.id}')">Sil</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="8" class="py-6 text-center text-slate-500">Kayıt bulunamadı</td></tr>`;
+}
+
+function renderCommunications(){
+  document.getElementById('communicationsTableBody').innerHTML=state.communications.map(c=>`
+    <tr class="border-b"><td class="py-4">${escapeHtml(c.tarih)}</td><td>${escapeHtml(c.tip)}</td><td>${escapeHtml(c.hedef)}</td><td>${escapeHtml(c.ozet)}</td></tr>`).join('') || `<tr><td colspan="4" class="py-6 text-center text-slate-500">İletişim kaydı yok.</td></tr>`;
+}
+
+function renderDocuments(){
+  const docs=[...state.documents].reverse();
+  document.getElementById('documentsTableBody').innerHTML=docs.map(d=>`
+    <tr class="border-b">
+      <td class="py-4">${escapeHtml(d.id)}</td>
+      <td>${escapeHtml(d.tur)}</td>
+      <td>${escapeHtml(d.konu)}</td>
+      <td>${formatDateTR(d.tarih)}</td>
+      <td><div class="flex flex-wrap gap-2"><button class="btn btn-soft !py-2 !px-3" onclick="viewDocument('${d.id}')">Görüntüle</button>${(d.generated || d.fileDataUrl)?`<button class="btn btn-light !py-2 !px-3" onclick="${d.generated ? "downloadGeneratedDocument" : "downloadStoredDocument"}('${d.id}')">PDF İndir</button>`:''}<button class="btn btn-soft !py-2 !px-3" onclick="deleteDocument('${d.id}')">Sil</button></div></td>
+    </tr>`).join('') || `<tr><td colspan="5" class="py-6 text-center text-slate-500">Evrak kaydı yok.</td></tr>`;
+  document.getElementById('countKarar').textContent=state.documents.filter(d=>d.tur==='Karar').length;
+  document.getElementById('countGelen').textContent=state.documents.filter(d=>d.tur==='Gelen').length;
+  document.getElementById('countGiden').textContent=state.documents.filter(d=>d.tur==='Giden').length;
+  document.getElementById('countGenerated').textContent=countGeneratedDocs();
+  document.getElementById('statDocs').textContent=state.documents.length;
+}
+
+
+function renderFinanceDocuments(){
+  const docs=[...state.documents].filter(d=>d.sourceModule==='muhasebe').reverse();
+  const el=document.getElementById('financeDocumentsList');
+  if(!el) return;
+  el.innerHTML=docs.map(d=>`
+    <div class="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <div class="text-xs uppercase tracking-[0.25em] text-slate-400">${escapeHtml(d.tur || 'Muhasebe Evrakı')}</div>
+          <div class="mt-2 text-lg font-black">${escapeHtml(d.konu)}</div>
+          <div class="mt-1 text-sm text-slate-500">${formatDateTR(d.tarih)} · ${escapeHtml(d.fileName || d.id)}</div>
+        </div>
+        <div class="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-600">PDF</div>
+      </div>
+      <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+        ${escapeHtml(d.body || 'Yüklenen muhasebe evrağı, sistemde güvenli biçimde kayıt altındadır.')}
+      </div>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <button class="btn btn-soft !py-2 !px-3" onclick="viewDocument('${d.id}')">Görüntüle</button>
+        <button class="btn btn-light !py-2 !px-3" onclick="downloadStoredDocument('${d.id}')">İndir</button>
+      </div>
+    </div>`).join('') || `<div class="rounded-2xl border border-dashed border-slate-300 p-6 text-sm text-slate-500">Henüz muhasebe evrağı yüklenmedi.</div>`;
+}
+
+function renderLogs(){
+  document.getElementById('logsTableBody').innerHTML=state.logs.map(l=>`
+    <tr class="border-b"><td class="py-4">${escapeHtml(l.saat)}</td><td>${escapeHtml(l.kullanici)}</td><td>${escapeHtml(l.islem)}</td><td>${escapeHtml(l.detay)}</td></tr>`).join('') || `<tr><td colspan="4" class="py-6 text-center text-slate-500">Log kaydı yok.</td></tr>`;
+  document.getElementById('logCount').textContent=state.logs.length.toLocaleString('tr-TR');
+}
+
+function renderRecentDocs(){
+  const docs=[...state.documents].reverse().slice(0,4);
+  document.getElementById('recentDocsList').innerHTML=docs.map(d=>`
+    <div class="rounded-2xl border border-slate-200 p-4 transition hover:-translate-y-0.5">
+      <div class="flex items-center justify-between gap-3">
+        <div><div class="font-semibold">${escapeHtml(d.konu)}</div><div class="mt-1 text-sm text-slate-500">${escapeHtml(d.tur)} · ${formatDateTR(d.tarih)}</div></div>
+        <button class="btn btn-soft !py-2 !px-3" onclick="viewDocument('${d.id}')">Görüntüle</button>
+      </div>
+    </div>`).join('') || `<div class="text-slate-500">Evrak bulunmuyor.</div>`;
+}
+
+function renderAgenda(){
+  const pending=state.applications.filter(a=>a.durum==='Bekliyor').length;
+  const debtors=state.members.filter(m=>Number(m.borc||0)>0).length;
+  const items=[
+    {title:`${pending} başvuru incelenmeyi bekliyor`,subtitle:'Üyelik yönetimi'},
+    {title:`${debtors} üyede açık aidat bakiyesi var`,subtitle:'Borç bildirimi ve tahsilat'},
+    {title:`${countGeneratedDocs()} adet sistem üretimli belge hazır`,subtitle:'Makbuz / rapor / bildirim'},
+    {title:`Bu ay ${state.finance.length} finans hareketi işlendi`,subtitle:'Muhasebe görünümü'}
+  ];
+  document.getElementById('agendaList').innerHTML=items.map(i=>`<div class="rounded-2xl border border-slate-200 p-4"><div class="font-semibold">${escapeHtml(i.title)}</div><div class="mt-1 text-sm text-slate-500">${escapeHtml(i.subtitle)}</div></div>`).join('');
+}
+
+function updateStats(){
+  const totalMembers=state.members.length;
+  const active=state.members.filter(m=>m.durum==='Aktif').length;
+  const passive=state.members.filter(m=>m.durum==='Pasif').length;
+  const applicants=state.applications.filter(a=>a.durum!=='Reddedildi').length;
+  const pending=state.applications.filter(a=>a.durum==='Bekliyor').length;
+  const income=state.finance.filter(f=>f.tip==='Gelir').reduce((s,f)=>s+Number(f.tutar),0);
+  const expense=state.finance.filter(f=>f.tip==='Gider').reduce((s,f)=>s+Number(f.tutar),0);
+  const balance=income-expense;
+  const totalBorc=state.members.reduce((s,m)=>s+Number(m.borc||0),0);
+  const tahsilEdilen=state.members.filter(m=>m.aidat==='Ödendi').length + state.members.filter(m=>m.aidat==='Kısmi').length*0.5;
+  const toplamAidatli=Math.max(1,state.members.filter(m=>m.durum==='Aktif').length);
+  const collectionRate=Math.round((tahsilEdilen/toplamAidatli)*100);
+  const cm=currentMonth();
+  const monthIncome=state.finance.filter(f=>f.tip==='Gelir'&&monthKey(f.tarih)===cm).reduce((s,f)=>s+Number(f.tutar),0);
+  const monthExpense=state.finance.filter(f=>f.tip==='Gider'&&monthKey(f.tarih)===cm).reduce((s,f)=>s+Number(f.tutar),0);
+
+  document.getElementById('statTotalMembers').textContent=totalMembers;
+  document.getElementById('statMembersHelper').textContent=`${active} aktif üye`;
+  document.getElementById('statPendingApplications').textContent=pending;
+  document.getElementById('statBalance').textContent=money(balance);
+  document.getElementById('statCollectionRate').textContent=`%${collectionRate}`;
+  document.getElementById('collectionBar').style.width=`${Math.min(100,collectionRate)}%`;
+  document.getElementById('statLogs').textContent=state.logs.length;
+  document.getElementById('sumActive').textContent=active;
+  document.getElementById('sumPassive').textContent=passive;
+  document.getElementById('sumApplicants').textContent=applicants;
+  document.getElementById('sumThisMonthIncome').textContent=money(monthIncome);
+  document.getElementById('sumThisMonthExpense').textContent=money(monthExpense);
+  document.getElementById('sumComms').textContent=state.communications.length;
+  document.getElementById('sumAidatIncome').textContent=money(state.finance.filter(f=>f.tip==='Gelir'&&f.kategori==='Aidat').reduce((s,f)=>s+Number(f.tutar),0));
+  document.getElementById('sumDonationIncome').textContent=money(state.finance.filter(f=>f.tip==='Gelir'&&f.kategori==='Bağış').reduce((s,f)=>s+Number(f.tutar),0));
+  document.getElementById('sumExpenses').textContent=money(expense);
+  document.getElementById('sumDebt').textContent=money(totalBorc);
+  document.getElementById('templateCount').textContent=state.templates.length;
+  document.getElementById('todayCommCount').textContent=state.communications.filter(c=>String(c.tarih).startsWith(todayISO())).length;
+  document.getElementById('totalCommCount').textContent=state.communications.length;
+  document.getElementById('insightBox').textContent=totalBorc>0?`Açık aidat bakiyesi ${money(totalBorc)}. Borç bildirimi ve makbuz üretimi hazır.`:'Aidat görünümü sağlıklı. Başvuru ve belge akışı dengeli.';
+}
+
+function updateCharts(){
+  const grouped={};
+  state.finance.slice().sort((a,b)=>a.tarih.localeCompare(b.tarih)).forEach(f=>{
+    const key=monthKey(f.tarih); grouped[key] ||= {gelir:0,gider:0}; grouped[key][f.tip==='Gelir'?'gelir':'gider']+=Number(f.tutar);
+  });
+  const keys=Object.keys(grouped).sort().slice(-12);
+  financeChart.data.labels=keys.map(k=>k.replace('-','/'));
+  financeChart.data.datasets[0].data=keys.map(k=>grouped[k].gelir);
+  financeChart.data.datasets[1].data=keys.map(k=>grouped[k].gider);
+  financeChart.update();
+
+  const incomeMap={};
+  state.finance.filter(f=>f.tip==='Gelir').forEach(f=>incomeMap[f.kategori]=(incomeMap[f.kategori]||0)+Number(f.tutar));
+  incomeChart.data.labels=Object.keys(incomeMap);
+  incomeChart.data.datasets[0].data=Object.values(incomeMap);
+  incomeChart.update();
+
+  const add=new Array(12).fill(0), pas=new Array(12).fill(0);
+  state.members.forEach(m=>{if(m.giris){add[new Date(m.giris).getMonth()] += 1;} if(m.durum==='Pasif' && m.giris){pas[new Date(m.giris).getMonth()] += 1;}});
+  memberChart.data.datasets[0].data=add;
+  memberChart.data.datasets[1].data=pas;
+  memberChart.update();
+}
+
+function renderAll(){saveState();renderMembers();renderApplications();renderFinance();renderCommunications();renderDocuments();renderFinanceDocuments();renderLogs();renderRecentDocs();renderAgenda();updateStats();updateCharts();}
+
+function buildGeneratedDocRecord(type,title,payload){
+  const id=nextId('PDF',state.documents);
+  const record={id,tur:'Oluşturulan PDF',konu:title,tarih:todayISO(),generated:true,generatedType:type,payload};
+  state.documents.push(record); saveState(); return record;
+}
+
+
+function ensurePdf(){if(!window.jspdf || !window.jspdf.jsPDF || !window.html2canvas){alert('PDF kütüphaneleri yüklenemedi. İnternet bağlantısıyla tekrar deneyin.'); return false;} return true;}
+
+function pdfCardHTML(title, metaLeft, metaRight, sections){
+  return `
+    <div id="pdfRenderRoot" style="width:1000px;background:#ffffff;color:#0f172a;font-family:Arial, Helvetica, sans-serif;">
+      <div style="background:#0f172a;color:#fff;padding:28px 34px;">
+        <div style="font-size:34px;font-weight:800;line-height:1.1;">Dijital Savunma Derneği</div>
+        <div style="font-size:15px;opacity:.9;margin-top:8px;">Kurumsal Belge Sistemi</div>
+      </div>
+      <div style="padding:38px 34px 34px 34px;">
+        <div style="font-size:40px;font-weight:800;margin-bottom:28px;">${title}</div>
+        <div style="display:flex;gap:24px;margin-bottom:24px;">
+          <div style="flex:1;border:1px solid #dbe4ee;border-radius:18px;padding:20px 22px;">
+            <div style="font-size:22px;font-weight:700;margin-bottom:14px;">Belge Bilgileri</div>
+            ${metaLeft.map(([k,v])=>`<div style="font-size:17px;line-height:1.7;margin-bottom:2px;"><span style="font-weight:700;">${k}:</span> ${v}</div>`).join('')}
+          </div>
+          <div style="flex:1;border:1px solid #dbe4ee;border-radius:18px;padding:20px 22px;">
+            <div style="font-size:22px;font-weight:700;margin-bottom:14px;">Ödeme / İşlem Bilgileri</div>
+            ${metaRight.map(([k,v])=>`<div style="font-size:17px;line-height:1.7;margin-bottom:2px;"><span style="font-weight:700;">${k}:</span> ${v}</div>`).join('')}
+          </div>
+        </div>
+        ${sections.map(sec=>`
+          <div style="margin-top:18px;">
+            <div style="background:#f1f5f9;border-radius:14px;padding:12px 16px;font-size:22px;font-weight:700;margin-bottom:12px;">${sec.title}</div>
+            <div style="padding:4px 6px 0 6px;">
+              ${sec.lines.map(line=>`<div style="font-size:17px;line-height:1.75;margin-bottom:8px;">${line}</div>`).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      <div style="border-top:1px solid #e2e8f0;color:#64748b;font-size:12px;padding:14px 34px 18px 34px;">
+        Bu belge Dijital Savunma Derneği paneli tarafından otomatik oluşturulmuştur.
+      </div>
+    </div>
+  `;
+}
+
+async function saveStyledPdf(title, metaLeft, metaRight, sections, filename){
+  if(!ensurePdf()) return;
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-10000px';
+  wrapper.style.top = '0';
+  wrapper.innerHTML = pdfCardHTML(title, metaLeft, metaRight, sections);
+  document.body.appendChild(wrapper);
+  const node = wrapper.querySelector('#pdfRenderRoot');
+  const canvas = await window.html2canvas(node, {scale:2, backgroundColor:'#ffffff', useCORS:true});
+  document.body.removeChild(wrapper);
+
+  const imgData = canvas.toDataURL('image/png');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','pt','a4');
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
+  const imgW = canvas.width * ratio;
+  const imgH = canvas.height * ratio;
+  const x = (pageW - imgW) / 2;
+  pdf.addImage(imgData, 'PNG', x, 0, imgW, imgH);
+  pdf.save(filename);
+}
+
+function downloadGeneratedDocument(id){
+  const d=state.documents.find(x=>x.id===id && x.generated); if(!d) return;
+  const p=d.payload||{};
+  if(d.generatedType==='debt-single'){
+    saveStyledPdf(
+      'Aidat Bildirimi',
+      [['Belge No', d.id],['Düzenleme Tarihi', formatDateTR(d.tarih)],['Üye', p.ad],['E-posta', p.email||'-']],
+      [['Aidat Dönemi', p.period||'-'],['Son Ödeme Tarihi', formatDateTR(p.dueDate||todayISO())],['Ödeme Tutarı', money(p.amount||0)],['Telefon', p.telefon||'-']],
+      [{title:'Bildirim Metni', lines:['Sayın üye, derneğimize ait aidat bakiyenizin belirtilen son ödeme tarihine kadar tamamlanması rica olunur. Ödeme sonrasında kayıtlar güncellenecek ve tahsilat makbuzu oluşturulabilecektir.']}],
+      'aidat_bildirimi.pdf'
+    );
+  } else if(d.generatedType==='receipt'){
+    saveStyledPdf(
+      'Ödeme Makbuzu',
+      [['Belge No', d.id],['Düzenleme Tarihi', formatDateTR(d.tarih)],['Üye', p.ad],['T.C. Kimlik No', p.tcno||'-']],
+      [['Ödeme Tarihi', formatDateTR(p.paymentDate||todayISO())],['Ödeme Tutarı', money(p.amount||0)],['Ödeme Kanalı', p.channel||'-'],['E-posta', p.email||'-']],
+      [{title:'Açıklama', lines:[p.description||'Aidat tahsilatı işlemi kayıt altına alınmıştır.']}],
+      'odeme_makbuzu.pdf'
+    );
+  } else if(d.generatedType==='report'){
+    saveStyledPdf(
+      'Kurumsal Yönetim Raporu',
+      [['Rapor No', d.id],['Tarih', formatDateTR(d.tarih)],['Toplam Üye', p.totalMembers],['Bekleyen Başvuru', p.pendingApplications]],
+      [['Toplam Gelir', money(p.totalIncome||0)],['Toplam Gider', money(p.totalExpense||0)],['Net Bakiye', money(p.balance||0)],['Açık Aidat', money(p.totalDebt||0)]],
+      [{title:'Son İşlemler', lines:(p.lastLogs||[]).map(x=>`${x.saat} • ${x.kullanici} • ${x.islem}`)}],
+      'kurumsal_rapor.pdf'
+    );
+  } else if(d.generatedType==='applications'){
+    saveStyledPdf(
+      'Başvuru Listesi',
+      [['Belge No', d.id],['Tarih', formatDateTR(d.tarih)]],
+      [['Kayıt Sayısı', (p.items||[]).length]],
+      [{title:'Başvurular', lines:(p.items||[]).map((x,i)=>`${i+1}. ${x.ad} • ${x.email} • ${x.durum}`)}],
+      'basvuru_listesi.pdf'
+    );
+  } else if(d.generatedType==='finance'){
+    saveStyledPdf(
+      'Finans Özeti',
+      [['Belge No', d.id],['Tarih', formatDateTR(d.tarih)]],
+      [['Toplam Gelir', money(p.totalIncome||0)],['Toplam Gider', money(p.totalExpense||0)],['Net Bakiye', money(p.balance||0)]],
+      [{title:'Finans Hareketleri', lines:(p.items||[]).map(x=>`${x.id} • ${x.tip} • ${x.kategori} • ${money(x.tutar)}`)}],
+      'finans_ozeti.pdf'
+    );
+  } else if(d.generatedType==='debt-bulk'){
+    saveStyledPdf(
+      'Aidat Borçluları Bildirim Listesi',
+      [['Belge No', d.id],['Tarih', formatDateTR(d.tarih)]],
+      [['Kayıt Sayısı', (p.items||[]).length]],
+      [{title:'Borçlular', lines:(p.items||[]).map((x,i)=>`${i+1}. ${x.ad} • ${x.telefon||'-'} • ${money(x.borc||0)}`)}],
+      'aidat_borclulari.pdf'
+    );
+  }
+}
+
+
+function downloadStoredDocument(id){
+  const d=state.documents.find(x=>x.id===id); if(!d || !d.fileDataUrl) return;
+  const a=document.createElement('a');
+  a.href=d.fileDataUrl;
+  a.download=d.fileName || `${d.konu || 'evrak'}.pdf`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function viewDocument(id){
+  const d=state.documents.find(x=>x.id===id); if(!d) return;
+  if(!d.generated){
+    const uploadedBlock = d.fileDataUrl ? `
+      <div class="mt-8">
+        <div class="mb-3 text-sm font-semibold text-slate-500">Yüklenen PDF Evrak</div>
+        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+          <iframe src="${d.fileDataUrl}" class="h-[70vh] w-full bg-white"></iframe>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-3">
+          <button type="button" class="btn btn-dark" onclick="downloadStoredDocument('${d.id}')">PDF İndir</button>
+          <a href="${d.fileDataUrl}" target="_blank" class="btn btn-light">Yeni Sekmede Aç</a>
+        </div>
+      </div>` : '';
+    openModal('Belge Görüntüleme', `
+      <div class="doc-paper rounded-[24px] p-10">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="text-xs uppercase tracking-[0.3em] text-slate-400">${escapeHtml(d.tur)}</div>
+            <h3 class="mt-2 text-3xl font-black">${escapeHtml(d.konu)}</h3>
+          </div>
+          <div class="text-sm text-slate-500">${formatDateTR(d.tarih)}</div>
+        </div>
+        <div class="mt-8 grid gap-4 md:grid-cols-2">
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div class="text-sm text-slate-500">Belge Türü</div>
+            <div class="mt-2 text-xl font-black">${escapeHtml(d.tur)}</div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+            <div class="text-sm text-slate-500">Belge Tarihi</div>
+            <div class="mt-2 text-xl font-black">${formatDateTR(d.tarih)}</div>
+          </div>
+        </div>
+        <div class="mt-8 rounded-2xl border border-slate-200 p-6">
+          <div class="mb-3 text-sm font-semibold text-slate-500">Belge Özeti</div>
+          <div class="leading-7 text-slate-700">${escapeHtml(d.body||'Belge özeti bulunmuyor.')}</div>
+          ${d.fileName ? `<div class="mt-4 text-sm text-slate-500">Dosya: ${escapeHtml(d.fileName)}</div>` : ''}
+        </div>
+        ${uploadedBlock}
+      </div>`, null, false);
+    return;
+  }
+  const p=d.payload||{};
+  let html='';
+  if(d.generatedType==='debt-single'){
+    html=`<div class="doc-paper rounded-[24px] p-10"><div class="flex items-start justify-between"><div><div class="text-xs uppercase tracking-[0.3em] text-slate-400">Aidat Bildirimi</div><h3 class="mt-2 text-3xl font-black">${escapeHtml(d.konu)}</h3></div><div class="text-sm text-slate-500">Belge No: ${escapeHtml(d.id)}</div></div><div class="mt-8 grid gap-6 md:grid-cols-2"><div class="rounded-2xl border border-slate-200 bg-slate-50 p-5"><div class="text-sm text-slate-500">Üye</div><div class="mt-2 text-2xl font-black">${escapeHtml(p.ad||'-')}</div><div class="mt-4 space-y-2 text-sm text-slate-600"><div>${escapeHtml(p.email||'-')}</div><div>${escapeHtml(p.telefon||'-')}</div></div></div><div class="rounded-2xl border border-slate-200 bg-slate-50 p-5"><div class="text-sm text-slate-500">Ödeme Özeti</div><div class="mt-2 text-2xl font-black">${money(p.amount||0)}</div><div class="mt-4 space-y-2 text-sm text-slate-600"><div>Dönem: ${escapeHtml(p.period||'-')}</div><div>Son Tarih: ${formatDateTR(p.dueDate||todayISO())}</div></div></div></div><div class="mt-8 rounded-2xl border border-slate-200 p-6 text-sm leading-7 text-slate-700">Sayın üye, derneğimize ait aidat bakiyenizin belirtilen tarihe kadar tamamlanması rica olunur. Ödeme sonrasında kayıtlar güncellenecek ve makbuz üretilebilecektir.</div></div>`;
+  } else if(d.generatedType==='receipt'){
+    html=`<div class="doc-paper rounded-[24px] p-10"><div class="flex items-start justify-between"><div><div class="text-xs uppercase tracking-[0.3em] text-slate-400">Ödeme Makbuzu</div><h3 class="mt-2 text-3xl font-black">${escapeHtml(d.konu)}</h3></div><div class="text-sm text-slate-500">Belge No: ${escapeHtml(d.id)}</div></div><div class="mt-8 grid gap-6 md:grid-cols-2"><div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 space-y-2 text-sm"><div><span class="text-slate-500">Ad Soyad:</span> <strong>${escapeHtml(p.ad||'-')}</strong></div><div><span class="text-slate-500">T.C. Kimlik No:</span> <strong>${escapeHtml(p.tcno||'-')}</strong></div><div><span class="text-slate-500">E-posta:</span> <strong>${escapeHtml(p.email||'-')}</strong></div></div><div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 space-y-2 text-sm"><div><span class="text-slate-500">Ödeme Tarihi:</span> <strong>${formatDateTR(p.paymentDate||todayISO())}</strong></div><div><span class="text-slate-500">Ödeme Tutarı:</span> <strong>${money(p.amount||0)}</strong></div><div><span class="text-slate-500">Ödeme Kanalı:</span> <strong>${escapeHtml(p.channel||'-')}</strong></div></div></div><div class="mt-8 rounded-2xl border border-slate-200 p-6 text-sm text-slate-700">Açıklama: ${escapeHtml(p.description||'Aidat tahsilatı')}</div></div>`;
+  } else if(d.generatedType==='report'){
+    html=`<div class="doc-paper rounded-[24px] p-10"><div class="flex items-start justify-between"><div><div class="text-xs uppercase tracking-[0.3em] text-slate-400">Kurumsal Yönetim Raporu</div><h3 class="mt-2 text-3xl font-black">${escapeHtml(d.konu)}</h3></div><div class="text-sm text-slate-500">Belge No: ${escapeHtml(d.id)}</div></div><div class="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4"><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-sm text-slate-500">Toplam Üye</div><div class="mt-2 text-2xl font-black">${p.totalMembers}</div></div><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-sm text-slate-500">Bekleyen Başvuru</div><div class="mt-2 text-2xl font-black">${p.pendingApplications}</div></div><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-sm text-slate-500">Toplam Gelir</div><div class="mt-2 text-2xl font-black">${money(p.totalIncome||0)}</div></div><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-sm text-slate-500">Net Bakiye</div><div class="mt-2 text-2xl font-black">${money(p.balance||0)}</div></div></div><div class="mt-8 rounded-2xl border border-slate-200 p-6"><div class="mb-3 font-bold">Son İşlemler</div><div class="space-y-2 text-sm">${(p.lastLogs||[]).map(x=>`<div class="flex justify-between border-b border-slate-100 pb-2"><span>${escapeHtml(x.kullanici)} • ${escapeHtml(x.islem)}</span><span class="text-slate-500">${escapeHtml(x.saat)}</span></div>`).join('')}</div></div></div>`;
+  } else if(d.generatedType==='applications'){
+    html=`<div class="doc-paper rounded-[24px] p-10"><div class="flex items-start justify-between"><div><div class="text-xs uppercase tracking-[0.3em] text-slate-400">Başvuru Listesi</div><h3 class="mt-2 text-3xl font-black">${escapeHtml(d.konu)}</h3></div><div class="text-sm text-slate-500">${formatDateTR(d.tarih)}</div></div><div class="mt-8 space-y-3">${(p.items||[]).map((x,i)=>`<div class="rounded-2xl border border-slate-200 p-4"><div class="font-semibold">${i+1}. ${escapeHtml(x.ad)}</div><div class="mt-1 text-slate-500">${escapeHtml(x.email)} · ${escapeHtml(x.durum)}</div></div>`).join('')}</div></div>`;
+  } else if(d.generatedType==='finance'){
+    html=`<div class="doc-paper rounded-[24px] p-10"><div class="flex items-start justify-between"><div><div class="text-xs uppercase tracking-[0.3em] text-slate-400">Finans Özeti</div><h3 class="mt-2 text-3xl font-black">${escapeHtml(d.konu)}</h3></div><div class="text-sm text-slate-500">${formatDateTR(d.tarih)}</div></div><div class="mt-8 grid gap-4 md:grid-cols-3"><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-sm text-slate-500">Gelir</div><div class="mt-2 text-2xl font-black">${money(p.totalIncome||0)}</div></div><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-sm text-slate-500">Gider</div><div class="mt-2 text-2xl font-black">${money(p.totalExpense||0)}</div></div><div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-sm text-slate-500">Net</div><div class="mt-2 text-2xl font-black">${money(p.balance||0)}</div></div></div><div class="mt-8 rounded-2xl border border-slate-200 p-6 text-sm space-y-2">${(p.items||[]).map(x=>`<div class="flex items-center justify-between border-b border-slate-100 pb-2"><span>${escapeHtml(x.id)} • ${escapeHtml(x.kategori)} • ${escapeHtml(x.aciklama)}</span><strong>${money(x.tutar)}</strong></div>`).join('')}</div></div>`;
+  } else if(d.generatedType==='debt-bulk'){
+    html=`<div class="doc-paper rounded-[24px] p-10"><div class="flex items-start justify-between"><div><div class="text-xs uppercase tracking-[0.3em] text-slate-400">Aidat Borçluları Listesi</div><h3 class="mt-2 text-3xl font-black">${escapeHtml(d.konu)}</h3></div><div class="text-sm text-slate-500">${formatDateTR(d.tarih)}</div></div><div class="mt-8 space-y-3">${(p.items||[]).map((x,i)=>`<div class="rounded-2xl border border-slate-200 p-4 flex items-center justify-between"><div><div class="font-semibold">${i+1}. ${escapeHtml(x.ad)}</div><div class="mt-1 text-slate-500">${escapeHtml(x.telefon||'-')}</div></div><div class="text-xl font-black">${money(x.borc||0)}</div></div>`).join('')}</div></div>`;
+  }
+  openModal('Belge Görüntüleme', `${html}<div class="pt-5 flex gap-3"><button type="button" class="btn btn-dark" onclick="downloadGeneratedDocument('${d.id}')">PDF İndir</button></div>`, null, false);
+}
+
+function openDocumentCenter(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+  document.getElementById('evrak').classList.remove('hidden');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('nav-active'));
+  document.querySelector('[data-page="evrak"]').classList.add('nav-active');
+}
+
+
+window.setMemberPage=function(page){ memberPage=page; renderMembers(); window.scrollTo({top:0,behavior:'smooth'}); }
+window.setApplicationPage=function(page){ applicationPage=page; renderApplications(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+
+window.openFinanceDocAttachModal=function(financeId){
+  const tx=state.finance.find(x=>x.id===financeId); if(!tx) return;
+  openModal('Muhasebe Hareketine PDF Ekle', `
+    <div class="grid gap-4 md:grid-cols-2">
+      <div><label class="mb-2 block text-sm text-slate-500">Hareket Kodu</label><input class="input" value="${escapeHtml(tx.id)}" disabled></div>
+      <div><label class="mb-2 block text-sm text-slate-500">Tarih</label><input class="input" value="${formatDateTR(tx.tarih)}" disabled></div>
+      <div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">İşlem</label><input class="input" value="${escapeHtml(tx.aciklama)}" disabled></div>
+      <div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">PDF Evrak</label><input id="attachFinancePdfInput" type="file" accept="application/pdf" class="input" required></div>
+    </div>`, ()=>{
+      const fileInput=document.getElementById('attachFinancePdfInput');
+      const file=fileInput && fileInput.files ? fileInput.files[0] : null;
+      if(!file){ toast('Lütfen PDF evrak seçin'); return; }
+      if(file.type && file.type !== 'application/pdf'){ toast('Sadece PDF dosyası yükleyebilirsin'); return; }
+      const reader=new FileReader();
+      reader.onload=function(ev){
+        state.documents.push({
+          id:nextId('EV',state.documents),
+          tur:'Muhasebe Evrakı',
+          konu:`${tx.aciklama} Belgesi`,
+          tarih:tx.tarih||todayISO(),
+          body:`${tx.tip} / ${tx.kategori} işlemi için sonradan eklenen ilişkili muhasebe evrağı.`,
+          fileName:file.name,
+          fileDataUrl:ev.target.result,
+          mimeType:'application/pdf',
+          sourceModule:'muhasebe',
+          financeTransactionId:tx.id
+        });
+        logAction('Sayman','Muhasebe hareketine PDF eklendi', tx.id);
+        closeModal(); try{renderAll();}catch(err){console.error(err);} toast('PDF evrak muhasebe kaydına bağlandı');
+      };
+      reader.readAsDataURL(file);
+    });
+}
+
+window.deleteMember=function(id){const m=state.members.find(x=>x.id===id); if(!m) return; state.members=state.members.filter(x=>x.id!==id); logAction('Sekreter','Üye kaydı silindi',`${m.id} - ${m.ad}`); renderAll(); toast('Üye kaydı silindi');}
+window.deleteFinance=function(id){const f=state.finance.find(x=>x.id===id); if(!f) return; state.finance=state.finance.filter(x=>x.id!==id); logAction('Sayman','Muhasebe kaydı silindi',`${f.id} - ${f.aciklama}`); renderAll(); toast('Muhasebe kaydı silindi');}
+window.deleteDocument=function(id){const d=state.documents.find(x=>x.id===id); if(!d) return; state.documents=state.documents.filter(x=>x.id!==id); logAction('Sekreter','Evrak silindi',`${d.id} - ${d.konu}`); renderAll(); toast('Evrak kaydı silindi');}
+
+window.approveApplication=function(id){
+  const a=state.applications.find(x=>x.id===id); if(!a) return;
+  a.durum='Onaylandı';
+  state.members.unshift({id:nextId('U',state.members),ad:a.ad,email:a.email,telefon:a.telefon||'',tcno:a.tcno||'',dogumTarihi:a.dogumTarihi||'',adres:a.adres||'',meslek:a.meslek||'Başvuru Sahibi',durum:'Aktif',rol:'Üye',aidat:'Bekliyor',borc:1200,giris:todayISO()});
+  state.documents.push({id:nextId('EV',state.documents),tur:'Karar',konu:`Üyelik onay kararı - ${a.ad}`,tarih:todayISO(),body:`${a.ad} adlı adayın başvurusu yönetici tarafından değerlendirilmiş ve üyelik onayı verilmiştir. Karar tarihi, başvuru özeti ve ilgili işlem kaydı bu belge kapsamında tutulur.`});
+  logAction('Başkan','Başvuru onaylandı',`${a.id} - ${a.ad}`);
+  renderAll(); toast('Başvuru onaylandı ve üyeye dönüştürüldü');
+}
+window.rejectApplication=function(id){const a=state.applications.find(x=>x.id===id); if(!a) return; a.durum='Reddedildi'; logAction('Başkan','Başvuru reddedildi',`${a.id} - ${a.ad}`); renderAll(); toast('Başvuru reddedildi');}
+
+window.openApplicationDetail=function(id){
+  const a=state.applications.find(x=>String(x.id)===String(id)); if(!a) return;
+  openModal('Başvuru Detayı', `
+    <div class="grid gap-5 md:grid-cols-2">
+      <div class="rounded-2xl border border-slate-200 p-4">
+        <div class="text-sm text-slate-500">Başvuru No</div>
+        <div class="mt-1 text-xl font-black">${escapeHtml(a.id)}</div>
+        <div class="mt-4 space-y-3 text-sm">
+          <div><span class="text-slate-500">Ad Soyad:</span> <strong>${escapeHtml(a.ad||'-')}</strong></div>
+          <div><span class="text-slate-500">E-posta:</span> <strong>${escapeHtml(a.email||'-')}</strong></div>
+          <div><span class="text-slate-500">Telefon:</span> <strong>${escapeHtml(a.telefon||'-')}</strong></div>
+          <div><span class="text-slate-500">T.C. Kimlik No:</span> <strong>${escapeHtml(a.tcno||'-')}</strong></div>
+          <div><span class="text-slate-500">Doğum Tarihi:</span> <strong>${escapeHtml(a.dogumTarihi||'-')}</strong></div>
+          <div><span class="text-slate-500">Başvuru Tarihi:</span> <strong>${escapeHtml(a.tarih||'-')}</strong></div>
+        </div>
+      </div>
+      <div class="rounded-2xl border border-slate-200 p-4">
+        <div class="space-y-3 text-sm">
+          <div><span class="text-slate-500">Meslek:</span> <strong>${escapeHtml(a.meslek||'-')}</strong></div>
+          <div><span class="text-slate-500">Şehir:</span> <strong>${escapeHtml(a.sehir||'-')}</strong></div>
+          <div><span class="text-slate-500">Adres:</span> <strong>${escapeHtml(a.adres||'-')}</strong></div>
+          <div><span class="text-slate-500">Uzmanlık:</span> <strong>${escapeHtml(a.uzmanlik||'-')}</strong></div>
+          <div><span class="text-slate-500">İletişim İzni:</span> <strong>${a.iletisimIzni?'Var':'Yok'}</strong></div>
+          <div><span class="text-slate-500">Durum:</span> <span class="badge ${badgeClass(a.durum)}">${escapeHtml(a.durum||'-')}</span></div>
+        </div>
+      </div>
+      <div class="md:col-span-2 rounded-2xl border border-slate-200 p-4">
+        <div class="mb-2 text-sm font-semibold">Başvuru Notu</div>
+        <div class="whitespace-pre-wrap text-sm text-slate-700">${escapeHtml(a.not||'Not bulunmuyor.')}</div>
+      </div>
+      <div class="md:col-span-2 flex flex-wrap gap-3">
+        <button type="button" class="btn btn-dark" onclick="approveApplication('${a.id}'); closeModal();">Onayla</button>
+        <button type="button" class="btn btn-soft" onclick="rejectApplication('${a.id}'); closeModal();">Reddet</button>
+      </div>
+    </div>`, null, false);
+}
+
+window.openAidatModal=function(id){
+  const m=state.members.find(x=>String(x.id)===String(id)); if(!m) return;
+  openModal('Aidat Güncelle', `
+    <div class="grid gap-4 md:grid-cols-2">
+      <div><label class="mb-2 block text-sm text-slate-500">Üye</label><input class="input" value="${escapeHtml(m.ad)}" disabled></div>
+      <div><label class="mb-2 block text-sm text-slate-500">Aidat Durumu</label><select name="aidat" class="select"><option ${m.aidat==='Ödendi'?'selected':''}>Ödendi</option><option ${m.aidat==='Bekliyor'?'selected':''}>Bekliyor</option><option ${m.aidat==='Kısmi'?'selected':''}>Kısmi</option><option ${m.aidat==='Yok'?'selected':''}>Yok</option></select></div>
+      <div><label class="mb-2 block text-sm text-slate-500">Borç Tutarı</label><input name="borc" type="number" class="input" value="${m.borc}"></div>
+      <div><label class="mb-2 block text-sm text-slate-500">Ödeme Tarihi</label><input name="paymentDate" type="date" class="input" value="${todayISO()}"></div>
+      <div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Ödeme Kanalı</label><select name="channel" class="select"><option>Banka</option><option>Kasa</option><option>Kredi Kartı</option></select></div>
+    </div>`,
+    fd=>{
+      const oldDebt=Number(m.borc||0), newDebt=Number(fd.get('borc')||0);
+      m.aidat=fd.get('aidat'); m.borc=newDebt;
+      if(newDebt<oldDebt){
+        const paid=oldDebt-newDebt;
+        state.finance.unshift({id:nextId('G',state.finance),tip:'Gelir',kategori:'Aidat',aciklama:`${m.ad} aidat tahsilatı`,kanal:fd.get('channel')||'Banka',tutar:paid,tarih:fd.get('paymentDate')||todayISO()});
+      }
+      logAction('Sayman','Aidat bilgisi güncellendi',`${m.id} - ${m.ad}`);
+      closeModal(); renderAll(); toast('Aidat bilgisi güncellendi');
+    }
+  );
+}
+
+window.openMemberProfile=function(id){
+  const m=state.members.find(x=>String(x.id)===String(id)); if (!m) return;
+  openModal('Üye Profili', `
+    <div class="grid gap-5 md:grid-cols-2">
+      <div class="rounded-2xl border border-slate-200 p-4">
+        <div class="text-sm text-slate-500">Üye No</div>
+        <div class="mt-1 text-xl font-black">${escapeHtml(m.id)}</div>
+        <div class="mt-4 space-y-3 text-sm">
+          <div><span class="text-slate-500">Ad Soyad:</span> <strong>${escapeHtml(m.ad)}</strong></div>
+          <div><span class="text-slate-500">E-posta:</span> <strong>${escapeHtml(m.email||'-')}</strong></div>
+          <div><span class="text-slate-500">Telefon:</span> <strong>${escapeHtml(m.telefon||'-')}</strong></div>
+          <div><span class="text-slate-500">T.C. Kimlik No:</span> <strong>${escapeHtml(m.tcno||'-')}</strong></div>
+          <div><span class="text-slate-500">Doğum Tarihi:</span> <strong>${escapeHtml(m.dogumTarihi||'-')}</strong></div>
+          <div><span class="text-slate-500">Meslek:</span> <strong>${escapeHtml(m.meslek||'-')}</strong></div>
+          <div><span class="text-slate-500">Adres:</span> <strong>${escapeHtml(m.adres||'-')}</strong></div>
+          <div><span class="text-slate-500">Giriş:</span> <strong>${formatDateTR(m.giris)}</strong></div>
+        </div>
+      </div>
+      <div class="rounded-2xl border border-slate-200 p-4">
+        <div class="flex items-center justify-between">
+          <div><div class="text-sm text-slate-500">Durum</div><div class="mt-2"><span class="badge ${badgeClass(m.durum)}">${escapeHtml(m.durum)}</span></div></div>
+          <div><div class="text-sm text-slate-500">Aidat</div><div class="mt-2"><span class="badge ${badgeClass(m.aidat==='Bekliyor'?'BekliyorAidat':m.aidat)}">${escapeHtml(m.aidat)}</span></div></div>
+        </div>
+        <div class="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4"><div class="text-sm text-slate-500">Borç Durumu</div><div class="mt-2 text-3xl font-black">${money(m.borc)}</div></div>
+        <div class="mt-5">
+          <div class="mb-2 text-sm font-semibold">Hızlı İşlemler</div>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" class="btn btn-soft" onclick="openAidatModal('${m.id}')">Aidat Güncelle</button>
+            <button type="button" class="btn btn-light" onclick="createDebtDoc('${m.id}')">Bildirim PDF</button>
+            <button type="button" class="btn btn-dark" onclick="createReceiptDoc('${m.id}')">Makbuz PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>`, null, false);
+}
+
+function openMemberModal(){
+  openModal('Yeni Üye Ekle', `<div class="grid gap-4 md:grid-cols-2"><div><label class="mb-2 block text-sm text-slate-500">Ad Soyad *</label><input name="ad" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">T.C. Kimlik No *</label><input name="tcno" class="input" pattern="[0-9]{11}" maxlength="11" required></div><div><label class="mb-2 block text-sm text-slate-500">Doğum Tarihi *</label><input name="dogumTarihi" type="date" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">E-posta *</label><input name="email" type="email" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Telefon *</label><input name="telefon" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Meslek *</label><input name="meslek" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Durum</label><select name="durum" class="select"><option>Aktif</option><option>Pasif</option><option>Başvuru</option></select></div><div><label class="mb-2 block text-sm text-slate-500">Rol</label><select name="rol" class="select"><option>Üye</option><option>Yönetim</option><option>Gönüllü</option><option>Aday</option></select></div><div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Adres *</label><textarea name="adres" class="textarea h-24" required></textarea></div></div>`, fd=>{state.members.unshift({id:nextId('U',state.members),ad:fd.get('ad'),email:fd.get('email'),telefon:fd.get('telefon'),tcno:fd.get('tcno'),dogumTarihi:fd.get('dogumTarihi'),adres:fd.get('adres'),meslek:fd.get('meslek'),durum:fd.get('durum'),rol:fd.get('rol'),aidat:'Bekliyor',borc:1200,giris:todayISO()}); logAction('Sekreter','Yeni üye oluşturuldu',fd.get('ad')); closeModal(); renderAll(); toast('Yeni üye eklendi');});
+}
+
+function openApplicationModal(){
+  openModal('Yeni Başvuru Oluştur', `<div class="grid gap-4 md:grid-cols-2"><div><label class="mb-2 block text-sm text-slate-500">Ad Soyad *</label><input name="ad" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">T.C. Kimlik No *</label><input name="tcno" class="input" pattern="[0-9]{11}" maxlength="11" required></div><div><label class="mb-2 block text-sm text-slate-500">Doğum Tarihi *</label><input name="dogumTarihi" type="date" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">E-posta *</label><input name="email" type="email" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Telefon *</label><input name="telefon" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Meslek *</label><input name="meslek" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Şehir *</label><input name="sehir" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Uzmanlık</label><input name="uzmanlik" class="input"></div><div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Adres *</label><textarea name="adres" class="textarea h-24" required></textarea></div><div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Not</label><textarea name="not" class="textarea h-24"></textarea></div></div>`, fd=>{state.applications.unshift({id:nextId('B',state.applications),ad:fd.get('ad'),email:fd.get('email'),telefon:fd.get('telefon'),tcno:fd.get('tcno'),dogumTarihi:fd.get('dogumTarihi'),adres:fd.get('adres'),meslek:fd.get('meslek'),sehir:fd.get('sehir'),uzmanlik:fd.get('uzmanlik'),not:fd.get('not'),tarih:todayISO(),durum:'Bekliyor'}); logAction('Sekreter','Yeni başvuru eklendi',fd.get('ad')); closeModal(); renderAll(); toast('Yeni başvuru eklendi');});
+}
+
+function openFinanceModal(){
+  openModal('Yeni Muhasebe Hareketi', `
+    <div class="grid gap-4 md:grid-cols-2">
+      <div><label class="mb-2 block text-sm text-slate-500">Tip</label><select name="tip" class="select"><option>Gelir</option><option>Gider</option></select></div>
+      <div><label class="mb-2 block text-sm text-slate-500">Kategori</label><input name="kategori" class="input" placeholder="Aidat, Bağış, Yazılım..." required></div>
+      <div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Açıklama</label><input name="aciklama" class="input" required></div>
+      <div><label class="mb-2 block text-sm text-slate-500">Kanal</label><select name="kanal" class="select"><option>Banka</option><option>Kasa</option><option>Kredi Kartı</option></select></div>
+      <div><label class="mb-2 block text-sm text-slate-500">Tutar</label><input name="tutar" type="number" class="input" required></div>
+      <div><label class="mb-2 block text-sm text-slate-500">Tarih</label><input name="tarih" type="date" class="input" value="${todayISO()}"></div>
+      <div class="md:col-span-2">
+        <label class="mb-2 block text-sm text-slate-500">İlgili PDF Evrak (opsiyonel)</label>
+        <input id="financeDocumentFileInput" type="file" accept="application/pdf" class="input"><div class="mt-2 text-xs text-slate-500">Demo sürümde PDF tarayıcı içinde saklanır. Küçük boyutlu dosya kullanılması önerilir.</div>
+      </div>
+    </div>`, fd=>{
+      const tip=fd.get('tip');
+      const tx = {
+        id:nextId(tip==='Gelir'?'G':'E',state.finance),
+        tip,
+        kategori:fd.get('kategori'),
+        aciklama:fd.get('aciklama'),
+        kanal:fd.get('kanal'),
+        tutar:Number(fd.get('tutar')||0),
+        tarih:fd.get('tarih')||todayISO()
+      };
+      state.finance.unshift(tx);
+
+      const finalize = () => {
+        logAction('Sayman','Muhasebe kaydı eklendi',tx.aciklama);
+        closeModal(); try{renderAll();}catch(err){console.error(err);} toast('Muhasebe hareketi eklendi');
+      };
+
+      const fileInput=document.getElementById('financeDocumentFileInput');
+      const file=fileInput && fileInput.files ? fileInput.files[0] : null;
+      if(file){
+        if(file.type && file.type !== 'application/pdf'){ toast('Sadece PDF dosyası yükleyebilirsin'); return; }
+        const reader=new FileReader();
+        reader.onload=function(ev){
+          state.documents.push({
+            id:nextId('EV',state.documents),
+            tur:'Muhasebe Evrakı',
+            konu:`${tx.aciklama} Belgesi`,
+            tarih:tx.tarih||todayISO(),
+            body:`${tx.tip} / ${tx.kategori} işlemi için yüklenen ilişkili muhasebe evrağı.`,
+            fileName:file.name,
+            fileDataUrl:ev.target.result,
+            mimeType:'application/pdf',
+            sourceModule:'muhasebe',
+            financeTransactionId:tx.id
+          });
+          finalize();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        finalize();
+      }
+    });
+}
+
+function openDocumentModal(context='evrak'){
+  openModal(context==='muhasebe' ? 'Muhasebe Evrakı Yükle' : 'Yeni Evrak Kaydı', `
+    <div class="grid gap-4 md:grid-cols-2">
+      <div><label class="mb-2 block text-sm text-slate-500">Tür</label><select name="tur" class="select">${context==='muhasebe' ? '<option>Muhasebe Evrakı</option><option>Dekont</option><option>Fatura</option><option>Tahsilat Belgesi</option>' : '<option>Karar</option><option>Gelen</option><option>Giden</option><option>Genel Evrak</option><option>Muhasebe Evrakı</option>'}</select></div>
+      <div><label class="mb-2 block text-sm text-slate-500">Tarih</label><input name="tarih" type="date" class="input" value="${todayISO()}"></div>
+      <div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Konu</label><input name="konu" class="input" placeholder="${context==='muhasebe' ? 'Örn. Mart 2026 Kira Dekontu' : 'Belge konusu'}" required></div>
+      <div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Belge Özeti</label><textarea name="body" class="textarea h-24" placeholder="Belgeye ait kısa açıklama veya özet"></textarea></div>
+      <div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">PDF Evrak</label><input id="documentFileInput" type="file" accept="application/pdf" class="input"><div class="mt-2 text-xs text-slate-500">Demo sürümde PDF, tarayıcı içinde saklanır. Büyük dosyalarda kayıt tarayıcı limitine takılabilir.</div></div>
+    </div>`, fd=>{
+      const fileInput=document.getElementById('documentFileInput');
+      const file=fileInput && fileInput.files ? fileInput.files[0] : null;
+
+      const saveRecord = (fileDataUrl='') => {
+        state.documents.push({
+          id:nextId('EV',state.documents),
+          tur:fd.get('tur'),
+          konu:fd.get('konu'),
+          tarih:fd.get('tarih')||todayISO(),
+          body:fd.get('body')||'',
+          fileName:file ? file.name : '',
+          fileDataUrl:fileDataUrl,
+          mimeType:file ? 'application/pdf' : '',
+          sourceModule:context
+        });
+        logAction(context==='muhasebe' ? 'Sayman' : 'Sekreter', 'PDF evrak eklendi', `${fd.get('tur')} - ${fd.get('konu')}`);
+        closeModal(); try{renderAll();}catch(err){console.error(err);} toast('PDF evrak sisteme kaydedildi');
+      };
+
+      if(file){
+        if(file.type && file.type !== 'application/pdf'){ toast('Sadece PDF dosyası yükleyebilirsin'); return; }
+        const reader=new FileReader();
+        reader.onload=function(ev){ saveRecord(ev.target.result); };
+        reader.readAsDataURL(file);
+      } else {
+        saveRecord('');
+      }
+    });
+}
+
+function createDebtDoc(id){
+  const m=state.members.find(x=>String(x.id)===String(id)); if(!m) return;
+  const doc=buildGeneratedDocRecord('debt-single',`Aidat Bildirimi - ${m.ad}`,{ad:m.ad,email:m.email,telefon:m.telefon,period:'2026 Yıllık Aidat',dueDate:todayISO(),amount:Number(m.borc||0)});
+  logAction('Sistem','Aidat bildirim PDF üretildi',m.ad);
+  renderAll(); downloadGeneratedDocument(doc.id); toast('Aidat bildirim PDF indirildi');
+}
+function createReceiptDoc(id){
+  const m=state.members.find(x=>String(x.id)===String(id)); if(!m) return;
+  const paidAmount=Math.max(0,1200-Number(m.borc||0));
+  const doc=buildGeneratedDocRecord('receipt',`Ödeme Makbuzu - ${m.ad}`,{ad:m.ad,email:m.email,tcno:m.tcno,paymentDate:todayISO(),amount:paidAmount,channel:'Banka',description:'Aidat tahsilatı'});
+  logAction('Sistem','Makbuz PDF üretildi',m.ad);
+  renderAll(); downloadGeneratedDocument(doc.id); toast('Makbuz PDF indirildi');
+}
+
+function generateDebtSummaryPdf(){
+  const items=state.members.filter(m=>Number(m.borc||0)>0).map(m=>({ad:m.ad,telefon:m.telefon,borc:m.borc}));
+  const doc=buildGeneratedDocRecord('debt-bulk','Aidat Borçluları Bildirim Listesi',{items});
+  logAction('Sistem','Toplu aidat bildirim PDF üretildi',`${items.length} üye`);
+  renderAll(); downloadGeneratedDocument(doc.id); toast('Toplu aidat bildirim PDF indirildi');
+}
+function generateFinanceSummaryPdf(){
+  const totalIncome=state.finance.filter(f=>f.tip==='Gelir').reduce((s,f)=>s+Number(f.tutar),0);
+  const totalExpense=state.finance.filter(f=>f.tip==='Gider').reduce((s,f)=>s+Number(f.tutar),0);
+  const doc=buildGeneratedDocRecord('finance','Finans Özeti',{totalIncome,totalExpense,balance:totalIncome-totalExpense,items:state.finance.slice(0,12)});
+  logAction('Sistem','Finans özeti PDF üretildi','Dashboard');
+  renderAll(); downloadGeneratedDocument(doc.id); toast('Finans özeti PDF indirildi');
+}
+function generateApplicationsPdf(){
+  const doc=buildGeneratedDocRecord('applications','Başvuru Listesi',{items:state.applications.map(a=>({ad:a.ad,email:a.email,durum:a.durum}))});
+  logAction('Sistem','Başvuru listesi PDF üretildi',`${state.applications.length} kayıt`);
+  renderAll(); downloadGeneratedDocument(doc.id); toast('Başvuru listesi PDF indirildi');
+}
+function generateDemoReportPdf(){
+  const totalIncome=state.finance.filter(f=>f.tip==='Gelir').reduce((s,f)=>s+Number(f.tutar),0);
+  const totalExpense=state.finance.filter(f=>f.tip==='Gider').reduce((s,f)=>s+Number(f.tutar),0);
+  const totalDebt=state.members.reduce((s,m)=>s+Number(m.borc||0),0);
+  const doc=buildGeneratedDocRecord('report','Kurumsal Demo Yönetim Raporu',{totalMembers:state.members.length,pendingApplications:state.applications.filter(a=>a.durum==='Bekliyor').length,totalIncome,totalExpense,balance:totalIncome-totalExpense,totalDebt,lastLogs:state.logs.slice(0,5)});
+  logAction('Sistem','Kurumsal rapor PDF üretildi','Dashboard');
+  renderAll(); downloadGeneratedDocument(doc.id); toast('Kurumsal rapor PDF indirildi');
+}
+
+document.getElementById('openAddMember').onclick=openMemberModal;
+document.getElementById('openAddApplication').onclick=openApplicationModal;
+document.getElementById('openQuickApplication').onclick=openApplicationModal;
+document.getElementById('openAddFinance').onclick=openFinanceModal;
+document.getElementById('openQuickFinance').onclick=openFinanceModal;
+document.getElementById('openAddDocument').onclick=()=>openDocumentModal('evrak');
+const financeDocBtn=document.getElementById('openAddFinanceDocument'); if(financeDocBtn) financeDocBtn.onclick=()=>openDocumentModal('muhasebe');
+const financeDocBtn2=document.getElementById('openAddFinanceDocumentSecondary'); if(financeDocBtn2) financeDocBtn2.onclick=()=>openDocumentModal('muhasebe');
+document.getElementById('memberSearch').oninput=()=>{memberPage=1; renderMembers();};
+document.getElementById('memberFilter').onchange=()=>{memberPage=1; renderMembers();};
+document.getElementById('financeSearch').oninput=renderFinance;
+document.getElementById('saveTemplateBtn').onclick=()=>{const tip=document.getElementById('commType').value; state.templates.unshift({id:'T-'+Date.now(),ad:`${tip} Taslağı`,tip}); logAction('Operatör','İletişim taslağı kaydedildi',`${tip} taslağı`); renderAll(); toast('Taslak kaydedildi');};
+document.getElementById('sendCommBtn').onclick=()=>{const tip=document.getElementById('commType').value,hedef=document.getElementById('commTarget').value,msg=document.getElementById('commMessage').value.trim(); if(!msg){toast('Mesaj boş olamaz');return;} state.communications.unshift({tarih:new Date().toISOString().slice(0,16).replace('T',' '),tip,hedef,ozet:msg.slice(0,70)+(msg.length>70?'...':'')}); logAction('Operatör',`${tip} gönderimi simüle edildi`,hedef); renderAll(); toast(`${tip} gönderimi tamamlandı`);};
+document.getElementById('backupBtn').onclick=()=>{document.getElementById('lastBackup').textContent='Şimdi'; logAction('Sistem','Yedekleme oluşturuldu','Manuel yedek alındı'); renderLogs(); toast('Yedekleme tamamlandı');};
+document.getElementById('exportBtn').onclick=generateDemoReportPdf;
+document.getElementById('generateDebtPdfBtn').onclick=generateDebtSummaryPdf;
+document.getElementById('generateFinancePdfBtn').onclick=generateFinanceSummaryPdf;
+document.getElementById('generateApplicationsPdfBtn').onclick=generateApplicationsPdf;
+
+initCharts();
+</script>
+
+<script>
+(function(){
+  const API_BASE = 'http://127.0.0.1:8000/api';
+  const ACCESS_KEY = 'access';
+  const REFRESH_KEY = 'refresh';
+  function getAccess(){ return localStorage.getItem(ACCESS_KEY) || ''; }
+  function setTokens(data){
+    if(data && data.access) localStorage.setItem(ACCESS_KEY, data.access);
+    if(data && data.refresh) localStorage.setItem(REFRESH_KEY, data.refresh);
+  }
+  function clearTokens(){
+    localStorage.removeItem(ACCESS_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+  }
+  function authHeaders(json=true){
+    const headers = {};
+    if(json) headers['Content-Type'] = 'application/json';
+    const token = getAccess();
+    if(token) headers['Authorization'] = 'Bearer ' + token;
+    return headers;
+  }
+  async function readJsonSafe(res){
+    const text = await res.text();
+    if(!text) return null;
+    try { return JSON.parse(text); } catch(_) { return text; }
+  }
+  async function api(path, options={}){
+    const res = await fetch(API_BASE + path, options);
+    const data = await readJsonSafe(res);
+    if(!res.ok){
+      const message = (data && (data.detail || data.message || data.error)) || ('İstek başarısız: ' + res.status);
+      throw new Error(typeof message === 'string' ? message : JSON.stringify(message));
+    }
+    return data;
+  }
+  function asArray(data){
+    if(Array.isArray(data)) return data;
+    if(data && Array.isArray(data.results)) return data.results;
+    return [];
+  }
+  function normalizeApplication(item){
+    return {
+      id: item.id,
+      ad: item.ad || item.name || item.full_name || item.fullName || '-',
+      email: item.email || '-',
+      telefon: item.telefon || item.phone || item.mobile || '-',
+      tcno: item.tcno || item.identity_no || item.identityNumber || '',
+      dogumTarihi: item.dogumTarihi || item.birth_date || item.birthDate || '',
+      adres: item.adres || item.address || '',
+      meslek: item.meslek || item.job || item.profession || '-',
+      sehir: item.sehir || item.city || '-',
+      uzmanlik: item.uzmanlik || item.specialty || item.education || '',
+      not: item.not || item.note || item.description || '',
+      iletisimIzni: Boolean(item.iletisimIzni ?? item.contact_permission ?? item.contactPermission ?? false),
+      tarih: item.tarih || item.created_at || item.createdAt || todayISO(),
+      durum: item.durum || item.status || 'Bekliyor'
+    };
+  }
+  function normalizeMember(item){
+    const aidat = item.aidat || item.dues_status || item.duesStatus || (Number(item.borc || item.debt || 0) > 0 ? 'Bekliyor' : 'Ödendi');
+    return {
+      id: item.id,
+      ad: item.ad || item.name || item.full_name || item.fullName || '-',
+      email: item.email || '-',
+      telefon: item.telefon || item.phone || item.mobile || '-',
+      tcno: item.tcno || item.identity_no || item.identityNumber || '',
+      dogumTarihi: item.dogumTarihi || item.birth_date || item.birthDate || '',
+      adres: item.adres || item.address || '',
+      meslek: item.meslek || item.job || item.profession || '-',
+      durum: item.durum || item.status || 'Aktif',
+      rol: item.rol || item.role || 'Üye',
+      aidat,
+      borc: Number(item.borc ?? item.debt ?? 0),
+      giris: item.giris || item.joined_at || item.created_at || todayISO()
+    };
+  }
+  function patchState(key, value){
+    if(typeof state !== 'undefined') state[key] = value;
+  }
+  function ensureAppVisible(){
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+  }
+  function ensureLoginVisible(){
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('loginScreen').classList.remove('hidden');
+  }
+  async function syncApplications(){
+    const data = await api('/applications/', { headers: authHeaders(false) });
+    patchState('applications', asArray(data).map(normalizeApplication));
+  }
+  async function syncMembers(){
+    const data = await api('/members/', { headers: authHeaders(false) });
+    patchState('members', asArray(data).map(normalizeMember));
+  }
+  async function syncDashboard(){
+    try {
+      const data = await api('/dashboard/', { headers: authHeaders(false) });
+      if(document.getElementById('statTotalMembers')) document.getElementById('statTotalMembers').textContent = data.total_members ?? data.members_count ?? state.members.length;
+      if(document.getElementById('statPendingApplications')) document.getElementById('statPendingApplications').textContent = data.pending_applications ?? data.pending_count ?? state.applications.filter(a=>a.durum==='Bekliyor').length;
+      if(document.getElementById('statBalance')) document.getElementById('statBalance').textContent = '₺' + Number(data.balance ?? data.total_balance ?? 0).toLocaleString('tr-TR');
+      if(document.getElementById('statDocs')) document.getElementById('statDocs').textContent = data.documents_count ?? state.documents.length;
+      if(document.getElementById('statLogs')) document.getElementById('statLogs').textContent = data.logs_count ?? state.logs.length;
+    } catch(err) {
+      console.warn('Dashboard API okunamadı, panel içi hesaplar kullanılacak.', err);
+    }
+  }
+  async function syncAllFromApi(){
+    await Promise.allSettled([syncMembers(), syncApplications()]);
+    try { renderAll(); } catch(err) { console.error(err); }
+    await syncDashboard();
+  }
+  window.handleLogin = async function(){
+    const username = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    if(!username || !password){ toast('Kullanıcı adı ve şifre gir'); return; }
+    try {
+      const data = await api('/accounts/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      setTokens(data || {});
+      ensureAppVisible();
+      toast('Panele giriş yapıldı');
+      await syncAllFromApi();
+    } catch(err){
+      console.error(err);
+      toast(err.message || 'Giriş başarısız');
+    }
+  };
+  const loginBtn = document.getElementById('loginBtn');
+  if(loginBtn) loginBtn.onclick = window.handleLogin;
+  window.handleLogoutApi = function(){
+    clearTokens();
+    ensureLoginVisible();
+    toast('Çıkış yapıldı');
+  };
+  const logoutBtn = document.getElementById('logoutBtn');
+  if(logoutBtn) logoutBtn.onclick = window.handleLogoutApi;
+  const mobileLogoutBtn = document.getElementById('mobileLogoutBtn');
+  if(mobileLogoutBtn) mobileLogoutBtn.onclick = window.handleLogoutApi;
+  window.approveApplication = async function(id){
+    try {
+      await api(`/applications/${id}/approve/`, { method: 'POST', headers: authHeaders(false) });
+      toast('Başvuru onaylandı');
+      await syncAllFromApi();
+    } catch(err){
+      console.error(err);
+      toast(err.message || 'Onay işlemi başarısız');
+    }
+  };
+  window.rejectApplication = async function(id){
+    try {
+      await api(`/applications/${id}/reject/`, { method: 'POST', headers: authHeaders(false) });
+      toast('Başvuru reddedildi');
+      await syncAllFromApi();
+    } catch(err){
+      console.error(err);
+      toast(err.message || 'Red işlemi başarısız');
+    }
+  };
+  window.deleteMember = async function(id){
+    try {
+      await api(`/members/${id}/`, { method: 'DELETE', headers: authHeaders(false) });
+      logAction('Sekreter','Üye kaydı silindi',String(id));
+      toast('Üye kaydı silindi');
+      await syncAllFromApi();
+    } catch(err){
+      console.error(err);
+      toast(err.message || 'Silme işlemi başarısız');
+    }
+  };
+  window.openApplicationModal = function(){
+    openModal('Yeni Başvuru Oluştur', `<div class="grid gap-4 md:grid-cols-2"><div><label class="mb-2 block text-sm text-slate-500">Ad Soyad *</label><input name="ad" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">T.C. Kimlik No *</label><input name="tcno" class="input" pattern="[0-9]{11}" maxlength="11" required></div><div><label class="mb-2 block text-sm text-slate-500">Doğum Tarihi *</label><input name="dogumTarihi" type="date" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">E-posta *</label><input name="email" type="email" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Telefon *</label><input name="telefon" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Meslek *</label><input name="meslek" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Şehir *</label><input name="sehir" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Uzmanlık</label><input name="uzmanlik" class="input"></div><div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Adres *</label><textarea name="adres" class="textarea h-24" required></textarea></div><div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Not</label><textarea name="not" class="textarea h-24"></textarea></div></div>`, async fd=>{
+      const payload = { ad: fd.get('ad'), tcno: fd.get('tcno'), dogumTarihi: fd.get('dogumTarihi'), email: fd.get('email'), telefon: fd.get('telefon'), meslek: fd.get('meslek'), sehir: fd.get('sehir'), uzmanlik: fd.get('uzmanlik') || '', adres: fd.get('adres'), not: fd.get('not') || '' };
+      try {
+        await api('/applications/', { method: 'POST', headers: authHeaders(true), body: JSON.stringify(payload) });
+        logAction('Sekreter','Yeni başvuru eklendi',String(payload.ad));
+        closeModal();
+        toast('Yeni başvuru eklendi');
+        await syncAllFromApi();
+      } catch(err){
+        console.error(err);
+        toast(err.message || 'Başvuru eklenemedi');
+      }
+    });
+  };
+  window.openMemberModal = function(){
+    openModal('Yeni Üye Ekle', `<div class="grid gap-4 md:grid-cols-2"><div><label class="mb-2 block text-sm text-slate-500">Ad Soyad *</label><input name="ad" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">T.C. Kimlik No *</label><input name="tcno" class="input" pattern="[0-9]{11}" maxlength="11"></div><div><label class="mb-2 block text-sm text-slate-500">Doğum Tarihi</label><input name="dogumTarihi" type="date" class="input"></div><div><label class="mb-2 block text-sm text-slate-500">E-posta *</label><input name="email" type="email" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Telefon *</label><input name="telefon" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Meslek *</label><input name="meslek" class="input" required></div><div><label class="mb-2 block text-sm text-slate-500">Durum</label><select name="durum" class="select"><option>Aktif</option><option>Pasif</option><option>Başvuru</option></select></div><div><label class="mb-2 block text-sm text-slate-500">Rol</label><select name="rol" class="select"><option>Üye</option><option>Yönetim</option><option>Gönüllü</option><option>Aday</option></select></div><div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Adres</label><textarea name="adres" class="textarea h-24"></textarea></div></div>`, async fd=>{
+      const payload = { ad: fd.get('ad'), tcno: fd.get('tcno') || '', dogumTarihi: fd.get('dogumTarihi') || '', email: fd.get('email'), telefon: fd.get('telefon'), meslek: fd.get('meslek'), durum: fd.get('durum'), rol: fd.get('rol'), adres: fd.get('adres') || '' };
+      try {
+        await api('/members/', { method: 'POST', headers: authHeaders(true), body: JSON.stringify(payload) });
+        logAction('Sekreter','Yeni üye oluşturuldu',String(payload.ad));
+        closeModal();
+        toast('Yeni üye eklendi');
+        await syncAllFromApi();
+      } catch(err){
+        console.error(err);
+        toast(err.message || 'Üye eklenemedi');
+      }
+    });
+  };
+  const openAddMemberBtn = document.getElementById('openAddMember');
+  if(openAddMemberBtn) openAddMemberBtn.onclick = window.openMemberModal;
+  const openAddAppBtn = document.getElementById('openAddApplication');
+  if(openAddAppBtn) openAddAppBtn.onclick = window.openApplicationModal;
+  const openQuickAppBtn = document.getElementById('openQuickApplication');
+  if(openQuickAppBtn) openQuickAppBtn.onclick = window.openApplicationModal;
+  if(getAccess()){
+    ensureAppVisible();
+    syncAllFromApi();
+  }
+})();
+</script>
+
+</body>
+</html>
