@@ -372,16 +372,31 @@ const SEED={
 
 function clone(o){return JSON.parse(JSON.stringify(o));}
 let memoryState = null;
+
 function loadState(){
   try{
     const raw = window.localStorage ? localStorage.getItem(STORE_KEY) : null;
-    if(raw) return JSON.parse(raw);
+    if(raw){
+      const parsed = JSON.parse(raw);
+
+      return {
+        members: Array.isArray(parsed.members) ? parsed.members : clone(SEED.members),
+        applications: Array.isArray(parsed.applications) ? parsed.applications : clone(SEED.applications),
+        finance: Array.isArray(parsed.finance) && parsed.finance.length ? parsed.finance : clone(SEED.finance),
+        documents: Array.isArray(parsed.documents) ? parsed.documents : clone(SEED.documents),
+        templates: Array.isArray(parsed.templates) ? parsed.templates : clone(SEED.templates || []),
+        communications: Array.isArray(parsed.communications) ? parsed.communications : clone(SEED.communications || []),
+        logs: Array.isArray(parsed.logs) ? parsed.logs : clone(SEED.logs),
+      };
+    }
   }catch(err){
     console.warn('localStorage okunamadı, geçici hafıza modu kullanılacak.', err);
   }
   return memoryState ? clone(memoryState) : clone(SEED);
 }
+
 let state=loadState();
+saveState();
 function saveState(){
   try{
     if(window.localStorage){
@@ -1081,7 +1096,7 @@ function openFinanceModal(){
   openModal('Yeni Muhasebe Hareketi', `
     <div class="grid gap-4 md:grid-cols-2">
       <div><label class="mb-2 block text-sm text-slate-500">Tip</label><select name="tip" class="select"><option>Gelir</option><option>Gider</option></select></div>
-      <div><label class="mb-2 block text-sm text-slate-500">Kategori</label><input name="kategori" class="input" placeholder="Aidat, Bağış, Yazılım..." required></div>
+      <div><label class="mb-2 block text-sm text-slate-500">Kategori</label><input name="kategori" class="input" placeholder="Aidat, Bağış, Yazılım." required></div>
       <div class="md:col-span-2"><label class="mb-2 block text-sm text-slate-500">Açıklama</label><input name="aciklama" class="input" required></div>
       <div><label class="mb-2 block text-sm text-slate-500">Kanal</label><select name="kanal" class="select"><option>Banka</option><option>Kasa</option><option>Kredi Kartı</option></select></div>
       <div><label class="mb-2 block text-sm text-slate-500">Tutar</label><input name="tutar" type="number" class="input" required></div>
@@ -1091,21 +1106,51 @@ function openFinanceModal(){
         <input id="financeDocumentFileInput" type="file" accept="application/pdf" class="input"><div class="mt-2 text-xs text-slate-500">Demo sürümde PDF tarayıcı içinde saklanır. Küçük boyutlu dosya kullanılması önerilir.</div>
       </div>
     </div>`, fd=>{
-      const tip=fd.get('tip');
+      let tip = String(fd.get('tip') || '').trim();
+      let kategori = String(fd.get('kategori') || '').trim();
+      const aciklama = String(fd.get('aciklama') || '').trim();
+      const kanal = String(fd.get('kanal') || '').trim();
+      const tutar = Number(fd.get('tutar') || 0);
+      const tarih = fd.get('tarih') || todayISO();
+
+      if(tip.toLowerCase() === 'gelir') tip = 'Gelir';
+      if(tip.toLowerCase() === 'gider') tip = 'Gider';
+
+      const k = kategori.toLowerCase()
+        .replaceAll('ı','i')
+        .replaceAll('ğ','g')
+        .replaceAll('ş','s')
+        .replaceAll('ü','u')
+        .replaceAll('ö','o')
+        .replaceAll('ç','c');
+
+      if(k === 'aidat' || k === 'aidat tahsilati' || k === 'uyelik aidati'){
+        kategori = 'Aidat';
+      } else if(k === 'bagis' || k === 'bagis geliri' || k === 'donation'){
+        kategori = 'Bağış';
+      } else if(tip === 'Gider'){
+        kategori = kategori.charAt(0).toUpperCase() + kategori.slice(1).toLowerCase();
+      } else {
+        kategori = kategori.charAt(0).toUpperCase() + kategori.slice(1).toLowerCase();
+      }
+
       const tx = {
         id:nextId(tip==='Gelir'?'G':'E',state.finance),
         tip,
-        kategori:fd.get('kategori'),
-        aciklama:fd.get('aciklama'),
-        kanal:fd.get('kanal'),
-        tutar:Number(fd.get('tutar')||0),
-        tarih:fd.get('tarih')||todayISO()
+        kategori,
+        aciklama,
+        kanal,
+        tutar,
+        tarih
       };
+
       state.finance.unshift(tx);
 
       const finalize = () => {
         logAction('Sayman','Muhasebe kaydı eklendi',tx.aciklama);
-        closeModal(); try{renderAll();}catch(err){console.error(err);} toast('Muhasebe hareketi eklendi');
+        closeModal();
+        try{renderAll();}catch(err){console.error(err);}
+        toast('Muhasebe hareketi eklendi');
       };
 
       const fileInput=document.getElementById('financeDocumentFileInput');
@@ -1235,6 +1280,7 @@ document.getElementById('generateFinancePdfBtn').onclick=generateFinanceSummaryP
 document.getElementById('generateApplicationsPdfBtn').onclick=generateApplicationsPdf;
 
 initCharts();
+renderAll();
 </script>
 
 <script>
