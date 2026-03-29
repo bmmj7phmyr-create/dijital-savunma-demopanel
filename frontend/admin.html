@@ -60,11 +60,11 @@
           <div class="mb-8">
             <div class="text-sm font-semibold text-slate-500">Yönetici Girişi</div>
             <h2 class="mt-2 text-3xl font-black">Panele giriş yap</h2>
-            <p class="mt-2 text-slate-500">Demo erişimi hazır.</p>
+
           </div>
           <div class="space-y-4">
             <div>
-              <label class="mb-2 block text-sm text-slate-500">E-posta</label>
+              <label class="mb-2 block text-sm text-slate-500">Kullanıcı Adı</label>
               <input id="loginEmail" class="input">
             </div>
             <div>
@@ -1354,7 +1354,7 @@ initCharts();
     const password = document.getElementById('loginPassword').value.trim();
     if(!username || !password){ toast('Kullanıcı adı ve şifre gir'); return; }
     try {
-      const data = await api('/accounts/login/', {
+      const data = await api('/api/accounts/login/', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })

@@ -159,5 +159,8 @@ CORS_ALLOWED_ORIGINS = [
 ]
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-
+CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = [
+    "https://dijital-savunma-demopanel.onrender.com"
+]
 
