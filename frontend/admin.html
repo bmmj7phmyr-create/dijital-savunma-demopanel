@@ -1379,17 +1379,38 @@ renderAll();
     patchState('members', asArray(data).map(normalizeMember));
   }
   async function syncDashboard(){
-    try {
-      const data = await api('/dashboard/', { headers: authHeaders(false) });
-      if(document.getElementById('statTotalMembers')) document.getElementById('statTotalMembers').textContent = data.total_members ?? data.members_count ?? state.members.length;
-      if(document.getElementById('statPendingApplications')) document.getElementById('statPendingApplications').textContent = data.pending_applications ?? data.pending_count ?? state.applications.filter(a=>a.durum==='Bekliyor').length;
-      if(document.getElementById('statBalance')) document.getElementById('statBalance').textContent = '₺' + Number(data.balance ?? data.total_balance ?? 0).toLocaleString('tr-TR');
-      if(document.getElementById('statDocs')) document.getElementById('statDocs').textContent = data.documents_count ?? state.documents.length;
-      if(document.getElementById('statLogs')) document.getElementById('statLogs').textContent = data.logs_count ?? state.logs.length;
-    } catch(err) {
-      console.warn('Dashboard API okunamadı, panel içi hesaplar kullanılacak.', err);
+  try {
+    const data = await api('/dashboard/', { headers: authHeaders(false) });
+
+    if(document.getElementById('statTotalMembers')) {
+      document.getElementById('statTotalMembers').textContent =
+        data.total_members ?? data.members_count ?? state.members.length;
     }
+
+    if(document.getElementById('statPendingApplications')) {
+      document.getElementById('statPendingApplications').textContent =
+        data.pending_applications ?? data.pending_count ?? state.applications.filter(a=>a.durum==='Bekliyor').length;
+    }
+
+    // statBalance'ı API 0 ile ezmesin; panel içi hesap kalsın
+    if(document.getElementById('statBalance') && (data.balance != null || data.total_balance != null)) {
+      document.getElementById('statBalance').textContent =
+        '₺' + Number(data.balance ?? data.total_balance).toLocaleString('tr-TR');
+    }
+
+    if(document.getElementById('statDocs')) {
+      document.getElementById('statDocs').textContent =
+        data.documents_count ?? state.documents.length;
+    }
+
+    if(document.getElementById('statLogs')) {
+      document.getElementById('statLogs').textContent =
+        data.logs_count ?? state.logs.length;
+    }
+  } catch(err) {
+    console.warn('Dashboard API okunamadı, panel içi hesaplar kullanılacak.', err);
   }
+}
   async function syncAllFromApi(){
     await Promise.allSettled([syncMembers(), syncApplications()]);
     try { renderAll(); } catch(err) { console.error(err); }
