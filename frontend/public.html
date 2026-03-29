@@ -1,4 +1,6 @@
-<!DOCTYPE html>
+from pathlib import Path
+
+html = """<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
@@ -6,82 +8,37 @@
   <title>Dijital Savunma - Üyelik Başvuru Formu</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body{background:linear-gradient(180deg,#f8fafc 0%,#eef2ff 100%)}
-    .card{background:#fff;box-shadow:0 18px 44px rgba(15,23,42,.08)}
-    .input,.textarea{width:100%;border:1px solid #e2e8f0;border-radius:16px;padding:.95rem 1rem;outline:none;background:#fff}
+    body{background:#f8fafc}
+    .card{background:#fff;box-shadow:0 12px 32px rgba(15,23,42,.08)}
+    .grad{background:linear-gradient(135deg,#0f172a 0%,#1e293b 48%,#334155 100%)}
+    .input,.textarea{width:100%;border:1px solid #e2e8f0;border-radius:16px;padding:.9rem 1rem;outline:none}
     .input:focus,.textarea:focus{border-color:#0f172a;box-shadow:0 0 0 3px rgba(15,23,42,.06)}
-    .hero{background:linear-gradient(135deg,#0f172a 0%,#1e293b 48%,#334155 100%)}
   </style>
 </head>
 <body class="text-slate-900">
-
-  <!-- KVKK Modal -->
-  <div id="kvkkModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(2,6,23,.6);backdrop-filter:blur(4px)">
-    <div class="bg-white rounded-[28px] shadow-2xl w-full max-w-2xl flex flex-col" style="max-height:85vh">
-      <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-        <h3 class="text-xl font-black">KVKK Aydınlatma Metni</h3>
-        <button onclick="document.getElementById('kvkkModal').classList.add('hidden')" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center font-bold">✕</button>
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div>
+        <div class="text-xs uppercase tracking-[0.28em] text-slate-400">Dijital Savunma</div>
+        <div class="text-2xl font-black mt-1">Üyelik Başvurusu</div>
       </div>
-      <div class="overflow-y-auto px-6 py-5 text-sm text-slate-700 space-y-4 leading-7">
-        <p><strong>VERİ SORUMLUSU:</strong><br>Dijital Savunma Derneği</p>
-        <p><strong>1. AMAÇ</strong><br>Bu aydınlatma metni, 6698 sayılı Kişisel Verilerin Korunması Kanunu'nun ("KVKK") 10. maddesi ve Aydınlatma Yükümlülüğünün Yerine Getirilmesinde Uyulacak Usul ve Esaslar Hakkında Tebliğ kapsamında, Derneğimize üyelik başvurusu yapan kişilerin kişisel verilerinin işlenmesine ilişkin bilgi vermek amacıyla hazırlanmıştır.</p>
-        <p><strong>2. İŞLENEN KİŞİSEL VERİLER</strong><br>
-          • Kimlik bilgileri: Ad, soyad, T.C. kimlik numarası, doğum tarihi<br>
-          • İletişim bilgileri: E-posta adresi, cep telefonu numarası, ikamet adresi<br>
-          • Mesleki bilgiler: Meslek, uzmanlık alanı / öğrenim durumu<br>
-          • Lokasyon bilgisi: Şehir
-        </p>
-        <p><strong>3. KİŞİSEL VERİLERİN İŞLENME AMAÇLARI VE HUKUKİ DAYANAKLARI</strong><br>
-          • Üyelik başvurusunun alınması ve değerlendirilmesi — <em>Sözleşmenin kurulması veya ifası (md. 5/2-c)</em><br>
-          • Başvuru sahibiyle iletişime geçilmesi — <em>Sözleşmenin kurulması veya ifası (md. 5/2-c)</em><br>
-          • Üyelik kayıt ve takip süreçlerinin yürütülmesi — <em>Kanuni yükümlülüğün yerine getirilmesi (md. 5/2-ç)</em><br>
-          • Dernek faaliyetlerine ilişkin duyuru ve bilgilendirme yapılması — <em>Açık rıza (md. 5/1)</em>
-        </p>
-        <p><strong>4. KİŞİSEL VERİLERİN AKTARILMASI</strong><br>Kişisel verileriniz; yasal zorunluluklar dışında herhangi bir üçüncü kişi, kurum veya kuruluşa aktarılmamakta; yurt dışına transfer edilmemektedir.</p>
-        <p><strong>5. KİŞİSEL VERİLERİN SAKLANMA SÜRESİ</strong><br>Kişisel verileriniz, üyelik ilişkisinin devamı süresince ve üyeliğin sona ermesinden itibaren ilgili mevzuat kapsamında öngörülen yasal saklama süreleri boyunca muhafaza edilecektir. Başvurunun reddedilmesi halinde verileriniz en geç 6 ay içinde imha edilecektir.</p>
-        <p><strong>6. KİŞİSEL VERİ SAHİBİNİN HAKLARI (KVKK md. 11)</strong><br>
-          • Kişisel verilerinizin işlenip işlenmediğini öğrenme<br>
-          • İşlenmişse buna ilişkin bilgi talep etme<br>
-          • İşlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme<br>
-          • Yurt içinde veya yurt dışında aktarıldığı üçüncü kişileri bilme<br>
-          • Eksik veya yanlış işlenmişse düzeltilmesini isteme<br>
-          • KVKK'nın 7. maddesi çerçevesinde silinmesini veya yok edilmesini isteme<br>
-          • İşlenen verilerin münhasıran otomatik sistemler vasıtasıyla analiz edilmesi suretiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme<br>
-          • Kanuna aykırı işleme nedeniyle zarara uğramanız halinde zararın giderilmesini talep etme
-        </p>
-        <p><strong>7. BAŞVURU YOLU</strong><br>
-          Taleplerinizi kimliğinizi tespit edici belgelerle birlikte aşağıdaki kanallara iletebilirsiniz:<br>
-          • <strong>E-posta:</strong> kvkk@dijitalsavunma.org<br>
-          • <strong>Posta:</strong> Dijital Savunma Derneği, [Dernek Adresi]<br><br>
-          Talebiniz en geç <strong>30 (otuz) gün</strong> içinde sonuçlandırılacaktır. Yanıt verilmemesi veya yetersiz bulunması halinde Kişisel Verileri Koruma Kurulu'na şikâyette bulunma hakkınız saklıdır.
-        </p>
-      </div>
-      <div class="border-t border-slate-200 px-6 py-4 flex justify-end">
-        <button onclick="document.getElementById('kvkkModal').classList.add('hidden')" class="hero text-white rounded-2xl px-6 py-3 font-bold">Okudum, Kapat</button>
-      </div>
-    </div>
-  </div>
-
-  <header class="bg-white/90 backdrop-blur border-b border-slate-200">
-    <div class="max-w-5xl mx-auto px-6 py-5">
-      <div class="text-xs uppercase tracking-[0.30em] text-slate-400">Dijital Savunma</div>
-      <h1 class="text-3xl font-black mt-2">Üyelik Başvuru Formu</h1>
-      <p class="text-slate-500 mt-2 max-w-3xl">Bu form topluluk / dernek üyeliği için ön başvuru kaydı oluşturur. Başvurunuz yönetim ekibinin değerlendirmesine sunulur.</p>
+      <div class="text-sm text-slate-500">Topluluğa katılım için ön başvuru formu</div>
     </div>
   </header>
 
-  <main class="max-w-5xl mx-auto px-6 py-10">
+  <main class="max-w-4xl mx-auto px-6 py-10">
     <section class="card rounded-[32px] p-8 lg:p-10">
+      <div class="max-w-3xl">
+        <h1 class="text-3xl lg:text-4xl font-black">Başvuru Formu</h1>
+        <p class="mt-4 text-slate-600 leading-7">
+          Bu form, topluluk / dernek üyeliği için ön başvuru kaydı oluşturur. Başvurunuz yönetim kurulunun veya yetkili ekibin değerlendirmesine sunulur.
+          Formda verdiğiniz bilgiler yalnızca başvurunun değerlendirilmesi, sizinle iletişime geçilmesi ve gerekli kayıtların tutulması amacıyla kullanılacaktır.
+        </p>
+      </div>
 
-      <div class="rounded-2xl bg-slate-50 border border-slate-200 p-5 text-sm text-slate-700">
-        <div class="font-bold mb-2">KVKK Aydınlatma Metni</div>
-        <p class="mb-2"><strong>Veri Sorumlusu:</strong> Dijital Savunma Derneği</p>
-        <p class="mb-2"><strong>İşlenen Kişisel Veriler:</strong> Ad-soyad, T.C. kimlik numarası, doğum tarihi, e-posta adresi, telefon numarası, ikamet adresi, meslek ve uzmanlık bilgileri.</p>
-        <p class="mb-2"><strong>İşleme Amaçları:</strong> Üyelik başvurusunun alınması, değerlendirilmesi, başvuru sahibiyle iletişime geçilmesi, üyelik kayıt süreçlerinin yürütülmesi ve yasal yükümlülüklerin yerine getirilmesi.</p>
-        <p class="mb-2"><strong>Hukuki Dayanak:</strong> 6698 sayılı KVKK madde 5/2-a (açık rıza) ve madde 5/2-c (sözleşmenin kurulması).</p>
-        <p class="mb-2"><strong>Aktarım:</strong> Kişisel verileriniz üçüncü taraflarla paylaşılmamakta, yurt dışına aktarılmamaktadır.</p>
-        <p class="mb-2"><strong>Saklama Süresi:</strong> Üyelik süresince ve üyeliğin sona ermesinden itibaren yasal saklama yükümlülükleri kapsamında belirlenen süre boyunca saklanacaktır.</p>
-        <p><strong>Haklarınız:</strong> KVKK'nın 11. maddesi kapsamında kişisel verilerinize erişim, düzeltme, silme, işlemenin kısıtlanması ve itiraz haklarına sahipsiniz. Talepleriniz için <strong>kvkk@dijitalsavunma.org</strong> adresine başvurabilirsiniz.</p>
+      <div class="mt-8 rounded-2xl bg-slate-50 border border-slate-200 p-5 text-sm text-slate-700">
+        <div class="font-bold mb-2">KVKK Kısa Aydınlatma</div>
+        Kimlik, iletişim ve meslek bilgileriniz; başvurunun alınması, değerlendirilmesi, gerekirse sizinle iletişime geçilmesi ve kayıt süreçlerinin yürütülmesi amacıyla işlenir.
       </div>
 
       <form id="applicationForm" class="mt-8 space-y-5">
@@ -91,7 +48,7 @@
           <div><label class="text-sm text-slate-500 block mb-2">Doğum Tarihi *</label><input name="dogumTarihi" type="date" class="input" required></div>
           <div><label class="text-sm text-slate-500 block mb-2">Meslek *</label><input name="meslek" class="input" required></div>
           <div><label class="text-sm text-slate-500 block mb-2">E-posta *</label><input name="email" type="email" class="input" required></div>
-          <div><label class="text-sm text-slate-500 block mb-2">Cep Telefonu *</label><input name="telefon" class="input" required></div>
+          <div><label class="text-sm text-slate-500 block mb-2">Cep Telefonu *</label><input name="telefon" class="input" inputmode="tel" required></div>
           <div><label class="text-sm text-slate-500 block mb-2">Şehir *</label><input name="sehir" class="input" required></div>
           <div><label class="text-sm text-slate-500 block mb-2">Uzmanlık / Öğrenim</label><input name="uzmanlik" class="input"></div>
         </div>
@@ -99,96 +56,139 @@
         <div><label class="text-sm text-slate-500 block mb-2">İkamet Adresi *</label><textarea name="adres" class="textarea h-24" required></textarea></div>
         <div><label class="text-sm text-slate-500 block mb-2">Kısa Açıklama</label><textarea name="not" class="textarea h-28" placeholder="Neden katılmak istiyorsunuz?"></textarea></div>
 
-        <div class="rounded-2xl border border-slate-200 p-5 space-y-4 text-sm text-slate-700">
-          <label class="flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" name="beyanDogru" class="mt-1 w-4 h-4 accent-slate-900" required>
-            <span>Verdiğim bilgilerin doğru ve eksiksiz olduğunu beyan ediyor, başvurumun yönetim kurulunun takdirine bağlı olarak değerlendirileceğini kabul ediyorum. <span class="text-rose-500">*</span></span>
+        <div class="rounded-2xl border border-slate-200 p-5 space-y-3 text-sm text-slate-700">
+          <label class="flex items-start gap-3">
+            <input type="checkbox" name="beyanDogru" class="mt-1" required>
+            <span>Verdiğim bilgilerin doğru olduğunu ve başvurumun değerlendirmeye tabi olduğunu kabul ediyorum. *</span>
           </label>
-          <label class="flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" name="kvkkOnay" class="mt-1 w-4 h-4 accent-slate-900" required>
-            <span>
-              <button type="button" onclick="document.getElementById('kvkkModal').classList.remove('hidden')" class="text-slate-900 font-semibold underline underline-offset-2 hover:text-blue-700">KVKK Aydınlatma Metni</button>'ni okudum; kişisel verilerimin belirtilen amaçlar doğrultusunda işlenmesini kabul ediyorum. <span class="text-rose-500">*</span>
-            </span>
+          <label class="flex items-start gap-3">
+            <input type="checkbox" name="uyelikSarti" class="mt-1" required>
+            <span>Üyelik süreci ve koşulları hakkında bilgilendirildiğimi kabul ediyorum. *</span>
           </label>
-          <label class="flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" name="uyelikSarti" class="mt-1 w-4 h-4 accent-slate-900" required>
-            <span>Dernek tüzüğünü ve üyelik koşullarını okuduğumu, tüzük hükümlerine uymayı kabul ettiğimi beyan ediyorum. <span class="text-rose-500">*</span></span>
-          </label>
-          <label class="flex items-start gap-3 cursor-pointer">
-            <input type="checkbox" name="iletisimIzni" class="mt-1 w-4 h-4 accent-slate-900">
-            <span>Dernek faaliyetleri, etkinlikler ve duyurulara ilişkin e-posta / SMS bildirimi almak istiyorum. <em class="text-slate-400">(Opsiyonel — dilediğiniz zaman geri alabilirsiniz.)</em></span>
+          <label class="flex items-start gap-3">
+            <input type="checkbox" name="iletisimIzni" class="mt-1">
+            <span>E-posta / SMS ile duyuru ve bilgilendirme almak istiyorum. (Opsiyonel)</span>
           </label>
         </div>
 
-        <div class="pt-2">
-          <button class="hero text-white rounded-2xl px-6 py-4 font-bold" type="submit">Başvuruyu Gönder</button>
+        <div class="flex flex-wrap gap-3 pt-2">
+          <button id="submitBtn" class="grad text-white rounded-2xl px-6 py-4 font-bold" type="submit">Başvuruyu Gönder</button>
+          <a href="/panel/" class="rounded-2xl border border-slate-200 px-6 py-4 font-semibold">Admin Panele Git</a>
         </div>
         <div class="text-xs text-slate-500">* işaretli alanlar zorunludur.</div>
       </form>
 
       <div id="successBox" class="hidden mt-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 p-4">
-        Başvurunuz başarıyla kaydedildi. Yönetim ekibi değerlendirme sonrasında sizinle iletişime geçecektir.
+        Başvurunuz kaydedildi. Yönetim panelindeki “Yeni Başvurular” alanında görüntülenebilir.
       </div>
+
+      <div id="errorBox" class="hidden mt-6 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 p-4"></div>
     </section>
   </main>
 
 <script>
-(function(){
-  const API_BASE = 'http://127.0.0.1:8000/api';
-  function showMessage(msg, ok=true){
-    const box = document.getElementById('successBox');
-    box.classList.remove('hidden');
-    box.className = 'mt-6 rounded-2xl p-4 border ' + (ok
-      ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-      : 'bg-rose-50 border-rose-200 text-rose-800');
-    box.textContent = msg;
-  }
-  async function readJsonSafe(res){
-    const text = await res.text();
-    if(!text) return null;
-    try { return JSON.parse(text); } catch(_) { return text; }
-  }
-  document.getElementById('applicationForm').addEventListener('submit', async function(e){
-    e.preventDefault();
-    const fd = new FormData(this);
-    const tcno = String(fd.get('tcno') || '').trim();
-    if(!/^\d{11}$/.test(tcno)){
-      showMessage('T.C. Kimlik No 11 haneli olmalıdır.', false);
-      return;
-    }
-    const payload = {
-      ad: fd.get('ad'),
-      tcno,
-      dogumTarihi: fd.get('dogumTarihi') || '',
-      meslek: fd.get('meslek') || '',
-      email: fd.get('email') || '',
-      telefon: fd.get('telefon') || '',
-      sehir: fd.get('sehir') || '',
-      uzmanlik: fd.get('uzmanlik') || '',
-      adres: fd.get('adres') || '',
-      not: fd.get('not') || '',
-      iletisimIzni: fd.get('iletisimIzni') === 'on'
-    };
-    try {
-      const res = await fetch(API_BASE + '/applications/', {
+const API_CANDIDATES = [
+  '/api/applications/public/',
+  '/api/applications/'
+];
+
+function showError(message){
+  const el = document.getElementById('errorBox');
+  el.textContent = message || 'Başvuru gönderilemedi.';
+  el.classList.remove('hidden');
+}
+
+function hideError(){
+  document.getElementById('errorBox').classList.add('hidden');
+}
+
+async function submitApplication(payload){
+  let lastMessage = 'Başvuru gönderilemedi.';
+  for (const url of API_CANDIDATES){
+    try{
+      const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(payload)
       });
-      const data = await readJsonSafe(res);
-      if(!res.ok){
-        const msg = (data && (data.detail || data.message || data.error)) || 'Başvuru kaydedilemedi.';
-        throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
-      }
-      this.reset();
-      showMessage('Başvurunuz başarıyla kaydedildi. Yönetim ekibi değerlendirme sonrasında sizinle iletişime geçecektir.', true);
-    } catch(err){
-      console.error(err);
-      showMessage(err.message || 'Başvuru gönderilirken bir hata oluştu.', false);
-    }
-  });
-})();
-</script>
 
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch(e) { data = text; }
+
+      if (res.ok){
+        return data;
+      }
+
+      if (data && typeof data === 'object'){
+        if (data.detail) lastMessage = data.detail;
+        else if (data.message) lastMessage = data.message;
+        else {
+          const firstKey = Object.keys(data)[0];
+          if (firstKey){
+            const value = data[firstKey];
+            lastMessage = Array.isArray(value) ? String(value[0]) : String(value);
+          }
+        }
+      } else if (typeof data === 'string' && data.trim()){
+        lastMessage = data;
+      }
+    } catch (err){
+      lastMessage = err && err.message ? err.message : 'Failed to fetch';
+    }
+  }
+  throw new Error(lastMessage);
+}
+
+document.getElementById('applicationForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  hideError();
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Gönderiliyor...';
+
+  try{
+    const fd = new FormData(this);
+    const tcno = String(fd.get('tcno') || '').trim();
+
+    if(!/^\\d{11}$/.test(tcno)){
+      throw new Error('T.C. Kimlik No 11 haneli olmalıdır.');
+    }
+
+    const payload = {
+      ad: String(fd.get('ad') || '').trim(),
+      email: String(fd.get('email') || '').trim(),
+      telefon: String(fd.get('telefon') || '').trim(),
+      tcno,
+      dogumTarihi: String(fd.get('dogumTarihi') || '').trim(),
+      sehir: String(fd.get('sehir') || '').trim(),
+      adres: String(fd.get('adres') || '').trim(),
+      meslek: String(fd.get('meslek') || '').trim(),
+      uzmanlik: String(fd.get('uzmanlik') || '').trim(),
+      not: String(fd.get('not') || '').trim(),
+      iletisimIzni: fd.get('iletisimIzni') === 'on',
+      durum: 'Bekliyor'
+    };
+
+    await submitApplication(payload);
+
+    this.reset();
+    document.getElementById('successBox').classList.remove('hidden');
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  } catch(err){
+    showError(err.message || 'Başvuru gönderilemedi.');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Başvuruyu Gönder';
+  }
+});
+</script>
 </body>
 </html>
+"""
+path = Path('/mnt/data/public_html_fixed_full.html')
+path.write_text(html, encoding='utf-8')
+print(path)
